@@ -1,0 +1,18 @@
+# Rule-parser test cases: text -> expected fields (fields not listed are not checked).
+cases:
+  - text: "A gentle piano lullaby in C major, slow and peaceful, waltz time"
+    expect: {key: "C major", instrument: piano, mood: calm, meter: "3/4", tempo_bpm: 70}
+  - text: "energetic electronic track with a synth lead at 128 bpm, 32 bars"
+    expect: {instrument: synth_lead, mood: energetic, genre: electronic, tempo_bpm: 128, bars: 32}
+  - text: "sad cello melody in F# minor, 6/8"
+    expect: {key: "F# minor", instrument: cello, mood: sad, meter: "6/8"}
+  - text: "Bb major brass fanfare, epic and fast"
+    expect: {key: "Bb major", instrument: brass, mood: epic, tempo_bpm: 130}
+  - text: "a cheerful celtic tune on the flute"
+    expect: {instrument: flute, mood: happy, genre: world, tempo_bpm: null}
+  - text: "write a piano piece in A minor, waltz, slow, 16 bars"
+    expect: {key: "A minor", instrument: piano, meter: "3/4", tempo_bpm: 70, bars: 16}
+  - text: "melancholy violin at 90 bpm"
+    expect: {instrument: violin, mood: sad, tempo_bpm: 90}
+  - text: "a minor change: make it a happy pop song"
+    expect: {mood: happy, genre: pop}

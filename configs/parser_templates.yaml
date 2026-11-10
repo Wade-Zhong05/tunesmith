@@ -1,0 +1,18 @@
+# Templates for synthetic user-style queries (src/tunesmith/understand/make_dataset.py).
+# Slots: {mood} {instrument} {genre} {tempo} {key} {meter} {bars}. Each slot is filled with
+# a sampled value (words from configs/keywords.yaml); fields without a slot become null.
+templates:
+  - "a {mood} {instrument} melody"
+  - "{mood} {genre} tune on {instrument}"
+  - "write a {tempo} piece in {key} for {instrument}"
+  - "I want something {mood} and {tempo}"
+  - "{key}, {meter}, {instrument}, {mood}"
+  - "a {tempo} {genre} melody in {meter} time"
+  - "compose a {mood} melody in {key}, about {bars} bars"
+  - "{instrument} solo, {mood}, {genre} style"
+  - "give me a {tempo} {instrument} tune that feels {mood}"
+  - "a short {mood} theme for {instrument} in {key}"
+  - "something {mood} for a rainy day, played on {instrument}"
+  - "{genre} melody, {tempo}, {meter}"
+  - "can you make a {mood} {genre} tune in {key}?"
+  - "{bars} bars of {mood} {instrument} in {meter}"

@@ -1,0 +1,115 @@
+# Setup
+
+## 1. Install
+
+The project uses [pixi](https://pixi.sh) for every dependency, including Python itself.
+Install pixi once (Windows: `winget install prefix-dev.pixi`, or see the pixi website),
+then from the repository root:
+
+```bash
+pixi install            # default environment: CPU PyTorch (app, tests, evaluation on CPU)
+pixi install -e cuda    # CUDA environment: PyTorch with CUDA 12.6 (training); needs an NVIDIA driver
+```
+
+The two environments are identical apart from the PyTorch build. Use the CUDA one by
+adding `-e cuda` to any task, e.g. `pixi run -e cuda train-composer`. Check the GPU:
+
+```bash
+pixi run -e cuda python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+```
+
+No pixi available (Kaggle, Colab, a plain virtualenv)? Install a matching PyTorch build,
+then `pip install -r requirements.txt`, and run the same modules with
+`python -m tunesmith.<module>` (the pixi tasks in `pyproject.toml` list them).
+
+## 2. Check that everything works
+
+```bash
+pixi run test      # unit tests (the student TODO tests show as "skipped" until implemented)
+pixi run smoke     # synthetic data -> tiny GRU composer -> MIDI + WAV, about one minute on CPU
+pixi run app       # http://127.0.0.1:8000 (random baseline until a composer is trained)
+```
+
+## 3. Data
+
+```bash
+pixi run download-data      # MidiCaps from the Hugging Face Hub -> data/raw/midicaps (train.json 428 MB + MIDI 1.6 GB)
+pixi run prepare-data       # -> data/processed/midicaps (133 s with 31 worker processes)
+```
+
+`configs/data.yaml` controls melody extraction, window lengths, the label source for the
+key and the validation fraction. For a quick run use `pixi run prepare-data --limit 5000`.
+MidiCaps' own `test_set` files form the test split; 2% of the remaining files (chosen by a
+hash of the path) form the validation split.
+
+## 4. Train the composer (attributes -> melody)
+
+```bash
+pixi run -e cuda train-composer --config configs/composer_base.yaml   # Transformer (student part)
+pixi run -e cuda train-composer --config configs/composer_gru.yaml    # GRU baseline
+pixi run -e cuda train-composer --config configs/composer_base.yaml --resume
+```
+
+Each run writes `best.pt`, `last.pt`, `log.csv`, `curves.png` and `config.yaml` to the
+config's `out_dir`. The script prints tokens per second and an ETA. Expected on the RTX
+4070 laptop GPU (8 GB): a usable model within about an hour, a full run in 2–4 hours.
+
+### Training on Duke CS OnDemand
+
+1. Open <https://ondemand.cs.duke.edu>, start **Interactive Apps -> JupyterLab** with
+   partition `compsci-gpu` and 1 GPU, then open a terminal.
+2. Install pixi in your home directory and get the code:
+   ```bash
+   curl -fsSL https://pixi.sh/install.sh | bash && source ~/.bashrc
+   git clone <your repository URL> tunesmith && cd tunesmith
+   pixi install -e cuda
+   ```
+3. Run the data and training tasks as above. Sessions have a time limit: `last.pt` is
+   saved every `save_every` steps, and `--resume` continues from it.
+
+## 5. Train the parser (text -> attributes)
+
+```bash
+pixi run make-parser-data          # -> data/parser/{train,val,test}.jsonl (needs data/raw/midicaps/train.json)
+pixi run download-parser-base      # Qwen/Qwen2.5-0.5B-Instruct -> models/parser/base/
+pixi run -e cuda train-parser      # LoRA adapter -> models/parser/lora-r16
+```
+
+To use it in the app, set `parser: lm` in `configs/app.yaml`.
+
+## 6. Evaluate
+
+```bash
+pixi run evaluate --system data --name reference                 # statistics of real test melodies
+pixi run evaluate --system uniform
+pixi run evaluate --system bigram
+pixi run evaluate --system models/composer/gru-base/best.pt --name gru
+pixi run evaluate --system models/composer/transformer-base/best.pt --name transformer
+pixi run evaluate-parser --parser rules
+pixi run evaluate-parser --parser lm --mode zero
+pixi run evaluate-parser --parser lm --mode few
+pixi run evaluate-parser --parser lm --mode lora
+```
+
+Results go to `outputs/eval/<name>/summary.json` and `outputs/eval_parser/<name>/`.
+Add `--render --clap` to `evaluate` for audio and CLAP text-audio scores (downloads a CLAP
+model on first use).
+
+## 7. Better audio (optional)
+
+```bash
+pixi run fetch-soundfont           # MuseScore General SF3 (MIT) -> models/soundfonts/
+```
+
+Without it, WAV previews use a small built-in synthesizer.
+
+## Troubleshooting
+
+- **`torch.cuda.is_available()` is False in the cuda environment:** update the NVIDIA
+  driver. The CUDA 12.6 wheels need a recent driver; the bundled CUDA runtime means no
+  CUDA toolkit is required.
+- **Hugging Face downloads fail:** the dataset and the Qwen model come from
+  huggingface.co. Download them on a network that reaches it (Duke CS OnDemand does), then
+  copy `data/raw/midicaps` and `models/parser/base`.
+- **"The Transformer composer is still a skeleton":** implement
+  `src/tunesmith/model/transformer.py` (see docs/student-guide.md), or train the GRU.

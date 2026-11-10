@@ -1,0 +1,21 @@
+# Data preparation: MidiCaps -> melody windows -> REMI tokens with control-token prefixes.
+# Used by `pixi run prepare-data` (src/tunesmith/data/prepare.py).
+
+metadata: data/raw/midicaps/train.json    # MidiCaps metadata (JSON lines)
+midi_root: data/raw/midicaps              # `location` fields are relative to this folder
+out_dir: data/processed/midicaps
+
+reduce: melody            # melody: lead track, made monophonic (skyline) | piano: all non-drum notes merged
+window_bars: [8, 16]      # window lengths; each window gets a BARS_8 / BARS_16 control token
+max_windows_per_file: 4   # non-overlapping windows sampled per file
+min_notes_per_window: 8
+max_seq_len: 1024         # windows whose token sequence is longer are dropped
+key_source: metadata      # metadata: MidiCaps key label | detected: Krumhansl-Schmuckler on the melody window
+val_fraction: 0.02        # fraction of non-test files used for validation (chosen by a hash of the path)
+seed: 0
+workers: 0                # 0 = cpu_count - 1
+
+tokenizer:
+  pitch_range: [21, 109]
+  beat_res: {"0_4": 8, "4_12": 4}   # 8 positions per beat; coarser for long notes
+  num_velocities: 8

@@ -1,0 +1,22 @@
+# pip fallback for machines without pixi (Kaggle, Colab, a plain venv on Duke CS OnDemand).
+# The pixi environments in pyproject.toml / pixi.lock are the reference setup.
+# Install the PyTorch build that matches your machine first, e.g.
+#   pip install torch --index-url https://download.pytorch.org/whl/cu126
+# then, from the repository root:
+#   pip install -r requirements.txt
+torch>=2.5
+numpy>=1.26
+pyyaml>=6
+pydantic>=2.6
+miditok>=3.0.4,<4
+symusic>=0.5
+tqdm>=4.66
+transformers>=4.56
+peft>=0.13
+huggingface_hub>=0.25
+accelerate>=1.0
+fastapi>=0.115
+uvicorn>=0.32
+matplotlib>=3.8
+pytest>=8
+-e .

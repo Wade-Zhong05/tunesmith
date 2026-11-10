@@ -1,0 +1,37 @@
+# Baseline architecture for comparison: 3-layer GRU language model, about 24M parameters
+# (the Transformer base config has about 25M), same data, loop and decoder.
+
+data_dir: data/processed/midicaps
+out_dir: models/composer/gru-base
+
+model:
+  type: gru
+  d_model: 1152
+  n_layers: 3
+  dropout: 0.1
+  max_seq_len: 1024
+
+train:
+  batch_size: 24
+  grad_accum: 2
+  lr: 1.0e-3
+  min_lr_ratio: 0.1
+  weight_decay: 0.01
+  betas: [0.9, 0.99]
+  warmup_steps: 500
+  max_steps: 40000
+  eval_every: 1000
+  eval_batches: 50
+  save_every: 2000
+  log_every: 50
+  grad_clip: 1.0
+  amp: auto
+  num_workers: 2
+  seed: 0
+  early_stop_patience: 5
+
+augment:
+  transpose_range: [-5, 6]
+  transpose_prob: 0.8
+  attr_dropout: 0.15
+  uncond_prob: 0.1

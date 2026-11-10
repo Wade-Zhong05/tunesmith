@@ -1,0 +1,32 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# Python
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.pytest_tmp/
+
+# Local credentials and caches (repository setup assisted by OpenAI Codex, 2026-11-10)
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+Thumbs.db
+
+# Downloaded or generated data (recreate with the pixi tasks in SETUP.md)
+data/raw/
+data/processed/
+data/parser/
+
+# Model weights, base models, soundfonts (see models/README.md)
+models/*
+!models/README.md
+
+# Run outputs: generated MIDI/WAV, evaluation folders, smoke tests, app logs
+outputs/

@@ -1,0 +1,40 @@
+# Tiny CPU config for smoke tests (`pixi run smoke`). Not for real training.
+# type can be switched to `transformer` once src/tunesmith/model/transformer.py is implemented.
+
+data_dir: outputs/smoke/processed
+out_dir: outputs/smoke/composer
+
+model:
+  type: gru
+  d_model: 64
+  n_layers: 2
+  n_heads: 2
+  d_ff: 128
+  dropout: 0.0
+  max_seq_len: 512
+  positional: learned
+
+train:
+  batch_size: 8
+  grad_accum: 1
+  lr: 3.0e-3
+  min_lr_ratio: 0.1
+  weight_decay: 0.0
+  betas: [0.9, 0.99]
+  warmup_steps: 5
+  max_steps: 40
+  eval_every: 20
+  eval_batches: 4
+  save_every: 20
+  log_every: 10
+  grad_clip: 1.0
+  amp: off
+  num_workers: 0
+  seed: 0
+  early_stop_patience: 100
+
+augment:
+  transpose_range: [-5, 6]
+  transpose_prob: 0.8
+  attr_dropout: 0.15
+  uncond_prob: 0.1

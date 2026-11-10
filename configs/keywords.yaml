@@ -1,0 +1,80 @@
+# Keyword tables for:
+#  - the rule-based parser baseline (src/tunesmith/understand/rules.py)
+#  - label cleaning when building parser training data (only keep attributes a caption mentions)
+#  - template queries (configs/parser_templates.yaml draws its words from here)
+# Matching is case-insensitive and whole-word; longer keywords win over shorter ones.
+
+instrument:
+  piano: [piano, grand piano]
+  electric_piano: [electric piano, rhodes, keys]
+  mallet: [vibraphone, marimba, xylophone, glockenspiel, music box, celesta]
+  organ: [organ, church organ]
+  accordion: [accordion]
+  guitar: [acoustic guitar, guitar, nylon guitar, classical guitar]
+  electric_guitar: [electric guitar, distorted guitar]
+  bass: [bass guitar, bass]
+  violin: [violin, fiddle]
+  cello: [cello]
+  harp: [harp]
+  strings: [strings, string ensemble, orchestra, string section]
+  choir: [choir, voices]
+  trumpet: [trumpet]
+  brass: [brass, horn, trombone, tuba, brass section]
+  sax: [saxophone, sax]
+  woodwind: [clarinet, oboe, bassoon]
+  flute: [flute, piccolo, recorder, pan flute]
+  synth_lead: [synth lead, lead synth, synthesizer, synth]
+  synth_pad: [synth pad, pad]
+  ethnic: [koto, sitar, shamisen, erhu, pipa, guzheng]
+
+mood:
+  happy: [happy, cheerful, joyful, bright, uplifting, positive, sunny]
+  sad: [sad, melancholic, melancholy, sorrowful, mournful, heartbreaking, emotional]
+  calm: [calm, peaceful, relaxing, relaxed, gentle, soothing, serene, meditative]
+  energetic: [energetic, powerful, driving, exciting, intense]
+  dark: [dark, ominous, gloomy, sinister]
+  epic: [epic, heroic, grand, cinematic, majestic]
+  romantic: [romantic, love, tender]
+  dreamy: [dreamy, ethereal, floating, spacey, spacious]
+  playful: [playful, fun, cute, whimsical, childlike]
+  tense: [tense, suspense, suspenseful, anxious, dramatic]
+
+genre:
+  classical: [classical, baroque, romantic era]
+  pop: [pop]
+  rock: [rock, metal]
+  electronic: [electronic, edm, techno, house, dance]
+  jazz: [jazz, blues, swing, funk]
+  folk: [folk, country]
+  ambient: [ambient, new age]
+  soundtrack: [soundtrack, film score, movie, game music]
+  world: [world music, latin, celtic]
+  hiphop: [hip hop, hip-hop, rap, lo-fi, lofi]
+
+tempo:   # value -> keywords; numbers like "90 bpm" are parsed separately
+  very_slow: [largo, grave, very slow, lento]
+  slow: [slow, adagio]
+  moderate: [andante, moderate, moderato, moderate tempo, walking pace]
+  lively: [allegretto, medium fast, lively]
+  fast: [fast, allegro, quick, upbeat]
+  very_fast: [very fast, vivace]
+  presto: [presto, extremely fast, prestissimo]
+
+meter:
+  "3/4": [waltz, "3/4", three-four]
+  "4/4": ["4/4", common time]
+  "2/4": ["2/4", march]
+  "6/8": ["6/8", jig, barcarolle]
+
+mode:
+  minor: [minor]
+  major: [major]
+
+bars:
+  "8": [short, brief, 8 bars, 8 measures]
+  "16": [16 bars, 16 measures]
+  "32": [long, extended, 32 bars, 32 measures]
+
+patterns:   # regex fragments used by the rule parser
+  bpm_units: [bpm, beats per minute]
+  bar_units: [bars, bar, measures, measure]

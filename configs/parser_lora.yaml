@@ -1,0 +1,29 @@
+# Text -> attributes parser: LoRA supervised fine-tuning of a small instruct LLM.
+# Used by `pixi run train-parser` (src/tunesmith/understand/train_parser.py).
+
+base_model: Qwen/Qwen2.5-0.5B-Instruct
+base_dir: models/parser/base/Qwen2.5-0.5B-Instruct   # filled by `pixi run download-parser-base`
+data_dir: data/parser
+out_dir: models/parser/lora-r16
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  batch_size: 8
+  grad_accum: 2
+  lr: 2.0e-4
+  warmup_steps: 50
+  weight_decay: 0.0
+  max_len: 384
+  eval_every: 300
+  eval_gen_samples: 64     # validation examples decoded for field accuracy at each evaluation
+  log_every: 20
+  grad_clip: 1.0
+  amp: auto
+  seed: 0
+  max_train_examples: null # set an int to subsample for quick runs

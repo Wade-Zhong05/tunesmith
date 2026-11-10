@@ -1,0 +1,26 @@
+# Web app and CLI settings (`pixi run app`, `pixi run generate`).
+
+parser: rules                 # rules | lm (needs parser_base, optionally parser_adapter)
+parser_base: models/parser/base/Qwen2.5-0.5B-Instruct
+parser_adapter: models/parser/lora-r16   # ignored if the folder does not exist
+parser_mode: lora             # zero | few | lora (lora falls back to few if no adapter)
+
+composer_checkpoint: models/composer/transformer-base/best.pt
+fallback_composer: markov     # used when the checkpoint is missing: markov | random
+device: auto                  # auto | cpu | cuda
+
+output_dir: outputs/app
+max_text_chars: 500
+rate_limit_per_minute: 30
+
+defaults:
+  bars: 16
+  temperature: 1.0
+  top_k: 0
+  top_p: 0.95
+  cfg_scale: 1.5
+  key_bias: 1.0               # logit penalty for out-of-key pitches (0 = off)
+
+render:
+  soundfont: models/soundfonts/MuseScore_General.sf3   # optional; numpy synth if missing
+  sample_rate: 44100
