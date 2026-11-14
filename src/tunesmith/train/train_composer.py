@@ -97,8 +97,9 @@ def plot_curves(log_path: Path, out_png: Path) -> None:
         ax.plot(*zip(*tr), label="train loss", alpha=0.8)
     if va:
         ax.plot(*zip(*va), "o-", label="validation loss")
+    ax.set_yscale("log")  # the first steps (loss ~6) would otherwise flatten the rest of the curve
     ax.set_xlabel("optimizer step")
-    ax.set_ylabel("cross-entropy (nats / token)")
+    ax.set_ylabel("cross-entropy (nats / token, log scale)")
     ax.legend()
     ax.grid(alpha=0.3)
     fig.tight_layout()
