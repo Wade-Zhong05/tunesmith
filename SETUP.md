@@ -111,5 +111,10 @@ Without it, WAV previews use a small built-in synthesizer.
 - **Hugging Face downloads fail:** the dataset and the Qwen model come from
   huggingface.co. Download them on a network that reaches it (Duke CS OnDemand does), then
   copy `data/raw/midicaps` and `models/parser/base`.
+- **"soundfont rendering failed (Unable to convert function return value ...)":**
+  symusic 0.6.0's SoundFont synthesizer returns a type its Python binding cannot convert
+  on this setup (seen on Windows, 2026-11-13). WAV previews then fall back to the
+  built-in numpy synthesizer. The MIDI files are unaffected: open them in MuseScore or a
+  media player for better sound.
 - **"The Transformer composer is still a skeleton":** implement
   `src/tunesmith/model/transformer.py` (see docs/student-guide.md), or train the GRU.
