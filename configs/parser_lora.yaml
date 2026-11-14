@@ -14,8 +14,8 @@ lora:
 
 train:
   epochs: 2
-  batch_size: 8
-  grad_accum: 2
+  batch_size: 4           # 4 x 4 = effective batch 16; batch 8 nearly fills 8 GB (151K-word vocabulary logits)
+  grad_accum: 4
   lr: 2.0e-4
   warmup_steps: 50
   weight_decay: 0.0

@@ -153,7 +153,7 @@ def train(cfg: dict[str, Any], device_name: str = "auto") -> dict[str, Any]:
             b = {k: v.to(device) for k, v in b.items()}
             loss = model(**b).loss / accum
             loss.backward()
-            running, running_n = running + float(loss) * accum, running_n + 1
+            running, running_n = running + float(loss.detach()) * accum, running_n + 1
             if (i + 1) % accum != 0:
                 continue
             torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], float(t_cfg["grad_clip"]))
