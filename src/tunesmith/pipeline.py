@@ -75,11 +75,16 @@ class TuneSmith:
 
     def _load_composer(self) -> None:
         ckpt = resolve(self.cfg.get("composer_checkpoint", ""))
-        if ckpt.is_file():
-            self.model, self.tok, meta = load_checkpoint(ckpt, self.device)
-            self.composer_name = f"{meta['model_cfg']['type']} ({ckpt.parent.name}/{ckpt.name})"
-            self.trained = True
-            return
+        fallback = self.cfg.get("fallback_checkpoint")
+        candidates = [ckpt] + ([resolve(fallback)] if fallback else [])
+        for path in candidates:
+            if path.is_file():
+                self.model, self.tok, meta = load_checkpoint(path, self.device)
+                self.composer_name = f"{meta['model_cfg']['type']} ({path.parent.name}/{path.name})"
+                self.trained = True
+                if path != ckpt:
+                    self.warnings.append(f"composer checkpoint not found at {ckpt}; using {path}")
+                return
         self.tok = _default_tokenizer()
         bigram = resolve("models/baselines/bigram.npy")
         if self.cfg.get("fallback_composer", "markov") == "markov" and bigram.exists():

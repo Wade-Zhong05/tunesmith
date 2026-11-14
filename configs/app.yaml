@@ -6,6 +6,7 @@ parser_adapter: models/parser/lora-r16   # ignored if the folder does not exist
 parser_mode: lora             # zero | few | lora (lora falls back to few if no adapter)
 
 composer_checkpoint: models/composer/transformer-base/best.pt
+fallback_checkpoint: models/composer/gru-base/best.pt   # used until the Transformer is trained
 fallback_composer: markov     # used when the checkpoint is missing: markov | random
 device: auto                  # auto | cpu | cuda
 

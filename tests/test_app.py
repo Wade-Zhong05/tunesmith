@@ -15,7 +15,8 @@ from tunesmith.render.render import render_wav
 
 def app_config(tmp_path, **kw):
     cfg = load_yaml("configs/app.yaml")
-    cfg.update(parser="rules", composer_checkpoint=str(tmp_path / "missing.pt"), fallback_composer="random",
+    cfg.update(parser="rules", composer_checkpoint=str(tmp_path / "missing.pt"), fallback_checkpoint=None,
+               fallback_composer="random",
                output_dir=str(tmp_path / "out"), device="cpu", rate_limit_per_minute=5, **kw)
     cfg["render"]["soundfont"] = None
     return cfg
