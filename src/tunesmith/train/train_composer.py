@@ -22,6 +22,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Iterator
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 import yaml
@@ -31,6 +32,44 @@ from ..data.dataset import IGNORE, TokenDataset, collate
 from ..model import NotImplementedYet, build_model, pick_device, save_checkpoint
 from ..paths import load_json, load_yaml, resolve
 from ..tokenizer import TuneTokenizer
+
+
+class LengthBucketSampler(torch.utils.data.Sampler):
+    """Batches of similar length, in random order.
+
+    Shuffle all indices, cut them into mega-batches of `bucket` batches, sort each mega-batch
+    by sequence length, split it into batches, then shuffle the batch order. Random batches
+    are padded to their longest sequence; on MidiCaps windows only about 35% of the padded
+    tokens are real, so bucketing roughly triples useful throughput.
+    """
+
+    def __init__(self, lengths, batch_size: int, bucket: int = 50, seed: int = 0, drop_last: bool = True):
+        self.lengths = np.asarray(lengths)
+        self.batch_size, self.bucket, self.seed, self.drop_last = batch_size, bucket, seed, drop_last
+        self.epoch = 0
+
+    def _batches(self) -> list[list[int]]:
+        rng = np.random.default_rng(self.seed + self.epoch)
+        idx = rng.permutation(len(self.lengths))
+        mega = self.batch_size * self.bucket
+        batches = []
+        for i in range(0, len(idx), mega):
+            chunk = idx[i:i + mega]
+            chunk = chunk[np.argsort(self.lengths[chunk], kind="stable")]
+            for j in range(0, len(chunk), self.batch_size):
+                b = chunk[j:j + self.batch_size]
+                if len(b) == self.batch_size or not self.drop_last:
+                    batches.append(b.tolist())
+        return [batches[k] for k in rng.permutation(len(batches))]
+
+    def __iter__(self):
+        batches = self._batches()
+        self.epoch += 1
+        yield from batches
+
+    def __len__(self) -> int:
+        n = len(self.lengths) // self.batch_size
+        return n if self.drop_last else -(-len(self.lengths) // self.batch_size)
 
 
 def lr_lambda(step: int, warmup: int, total: int, min_ratio: float) -> float:
@@ -129,8 +168,14 @@ def train(cfg: dict[str, Any], resume: bool = False, device_name: str = "auto") 
         raise ValueError(f"empty split: train {len(train_ds)}, val {len(val_ds)}")
     col = partial(collate, pad_id=tok.pad_id, prompt_len=tok.prompt_len)
     nw = int(t_cfg.get("num_workers", 0))
-    train_dl = DataLoader(train_ds, batch_size=int(t_cfg["batch_size"]), shuffle=True, drop_last=len(train_ds) > int(t_cfg["batch_size"]),
-                          num_workers=nw, collate_fn=col, persistent_workers=nw > 0, pin_memory=device.type == "cuda")
+    bs = int(t_cfg["batch_size"])
+    loader_kw = dict(num_workers=nw, collate_fn=col, persistent_workers=nw > 0, pin_memory=device.type == "cuda")
+    if t_cfg.get("length_bucketing", False):
+        sampler = LengthBucketSampler(train_ds.index[:, 1], bs, seed=int(t_cfg.get("seed", 0)),
+                                      drop_last=len(train_ds) > bs)
+        train_dl = DataLoader(train_ds, batch_sampler=sampler, **loader_kw)
+    else:
+        train_dl = DataLoader(train_ds, batch_size=bs, shuffle=True, drop_last=len(train_ds) > bs, **loader_kw)
     val_dl = DataLoader(val_ds, batch_size=int(t_cfg["batch_size"]), shuffle=False, num_workers=0, collate_fn=col)
 
     opt = torch.optim.AdamW(param_groups(model, float(t_cfg["weight_decay"])), lr=float(t_cfg["lr"]),
@@ -149,6 +194,12 @@ def train(cfg: dict[str, Any], resume: bool = False, device_name: str = "auto") 
         sched.load_state_dict(ck["scheduler"])
         step, best_val, bad_evals = ck["step"], ck["best_val"], ck.get("bad_evals", 0)
         print(f"resumed from step {step} (best val {best_val:.4f})")
+        if log_path.exists():  # drop log rows written after the checkpoint (the interrupted part)
+            with open(log_path, encoding="utf-8") as f:
+                rows = list(csv.reader(f))
+            kept = rows[:1] + [r for r in rows[1:] if r and int(r[0]) <= step]
+            with open(log_path, "w", newline="", encoding="utf-8") as f:
+                csv.writer(f).writerows(kept)
     else:
         with open(log_path, "w", newline="", encoding="utf-8") as f:
             csv.writer(f).writerow(["step", "lr", "train_loss", "val_loss", "tokens_per_s", "elapsed_s"])
@@ -169,6 +220,7 @@ def train(cfg: dict[str, Any], resume: bool = False, device_name: str = "auto") 
     it = forever(train_dl)
     model.train()
     t0, window_tokens, window_loss, window_n = time.time(), 0, 0.0, 0
+    start_step = step  # > 0 after --resume
     t_window = time.time()
     while step < max_steps:
         opt.zero_grad(set_to_none=True)
@@ -193,7 +245,7 @@ def train(cfg: dict[str, Any], resume: bool = False, device_name: str = "auto") 
             dt = time.time() - t_window
             tps = window_tokens / max(1e-9, dt)
             elapsed = time.time() - t0
-            eta = (max_steps - step) * elapsed / max(1, step)
+            eta = (max_steps - step) * elapsed / max(1, step - start_step)
             print(f"step {step}/{max_steps}  loss {window_loss / window_n:.4f}  lr {sched.get_last_lr()[0]:.2e}  "
                   f"{tps:,.0f} tok/s  eta {eta / 60:.1f} min", flush=True)
             log_row(step=step, lr=f"{sched.get_last_lr()[0]:.6g}", train_loss=f"{window_loss / window_n:.5f}",

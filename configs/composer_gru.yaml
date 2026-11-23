@@ -13,6 +13,7 @@ model:
 
 train:
   batch_size: 24
+  length_bucketing: true   # batch similar lengths together (~3x less padding)
   grad_accum: 2
   lr: 1.0e-3
   min_lr_ratio: 0.1

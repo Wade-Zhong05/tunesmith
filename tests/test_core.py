@@ -128,3 +128,27 @@ def test_attribute_dropout(tok, synth_data):
     seq = ds[0].numpy()
     assert all(tok.tokens[i].endswith("_NULL") for i in seq[1:tok.prompt_len - 1])
     assert np.array_equal(seq[tok.prompt_len - 1:], ds.raw(0)[tok.prompt_len - 1:])
+
+
+def test_length_bucket_sampler():
+    from tunesmith.train.train_composer import LengthBucketSampler
+
+    lengths = np.random.default_rng(0).integers(10, 1000, size=1000)
+    s = LengthBucketSampler(lengths, batch_size=8, bucket=10, seed=0)
+    batches = list(iter(s))
+    flat = [i for b in batches for i in b]
+    assert len(batches) == len(s) == 125 and sorted(flat) == list(range(1000))
+    padded = sum(len(b) * max(lengths[b]) for b in batches)
+    assert lengths.sum() / padded > 0.8  # far less padding than random batches
+    assert list(iter(s)) != batches       # a new order every epoch
+
+
+def test_dataset_pickles_without_token_data(tok, synth_data):
+    import pickle
+
+    _, processed = synth_data
+    ds = TokenDataset(processed, "train", tok, None)
+    blob = pickle.dumps(ds)
+    assert ds.__getstate__()["tokens"] is None  # workers reopen the memmap instead of copying the file
+    clone = pickle.loads(blob)
+    assert np.array_equal(clone.raw(0), ds.raw(0))
