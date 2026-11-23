@@ -11,6 +11,17 @@ pixi run pytest tests/test_transformer.py tests/test_sampling_filters.py -q -rs
 Until you finish, the app and the pipeline work with the GRU composer or the baselines,
 and generation falls back to plain sampling. Nothing is blocked.
 
+**A reference Transformer exists in `src/tunesmith/model/transformer_ref.py`.** It was
+written by the AI at your request and is trained with
+`configs/composer_transformer_ref.yaml`. Your version stays separate:
+- `tests/test_transformer.py` runs every check against both implementations; add
+  `-k student` to test only yours.
+- `configs/composer_base.yaml` trains yours into `models/composer/transformer-base`.
+- Same configuration means a direct comparison: same data, same steps, same evaluation.
+- Your Transformer also runs the **ensemble** (multi-instrument) mode with no code change:
+  copy `configs/composer_ensemble.yaml`, set `type: transformer`, and use
+  `max_seq_len: 2048`. Use `F.scaled_dot_product_attention` for that context length.
+
 ## 1. `src/tunesmith/model/transformer.py` (main part)
 
 A GPT-style decoder over the token sequence `BOS <7 control tokens> SEP <REMI music

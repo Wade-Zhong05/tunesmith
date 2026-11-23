@@ -67,6 +67,35 @@ config's `out_dir`. The script prints tokens per second and an ETA. Expected on 
 3. Run the data and training tasks as above. Sessions have a time limit: `last.pt` is
    saved every `save_every` steps, and `--resume` continues from it.
 
+### Ensemble (multi-instrument) mode
+
+```bash
+pixi run prepare-ensemble          # -> data/processed/midicaps_ensemble (318 s with 31 worker processes, about 0.7 GB)
+pixi run -e cuda train-ensemble    # configs/composer_ensemble.yaml -> models/composer/ensemble-ref (about 5.5 h on the 4070)
+pixi run -e cuda train-composer --config configs/composer_ensemble_medium.yaml   # 86M variant, for a >=16 GB GPU
+pixi run generate "a calm piece for strings, harp and synth pad, no drums" --mode ensemble
+pixi run smoke --mode ensemble --model-type transformer_ref   # one-minute CPU check
+```
+
+Evaluate with `pixi run evaluate --data-dir data/processed/midicaps_ensemble --system ...`
+(same systems as below). The default length is 8 bars, as in training.
+
+### Diffusion composer (experimental)
+
+Uses the prepared ensemble data; no extra preprocessing. See `docs/architecture.md` §11.
+
+```bash
+pixi run -e cuda train-diffusion       # configs/diffusion_ensemble.yaml -> models/diffusion/ensemble-unet (about 4.6 h on the 4070)
+pixi run train-diffusion --config configs/diffusion_tiny.yaml --device cpu   # one-minute check
+pixi run -e cuda diffusion-sample --text "a jazz groove with electric piano, sax and bass, with drums" --n 2
+pixi run -e cuda diffusion-sample --edit song.mid --bars 5 6     # rewrite bars 5-6, keep the rest
+pixi run -e cuda diffusion-sample --edit song.mid --keep 1       # keep part 1, rewrite the others
+pixi run -e cuda evaluate --data-dir data/processed/midicaps_ensemble --system models/diffusion/ensemble-unet/best.pt --cfg-scale 2.0 --name ens_diffusion
+```
+
+Training writes a few MIDI files to `models/diffusion/ensemble-unet/samples/` at every
+evaluation, so the model can be heard while it trains.
+
 ## 5. Train the parser (text -> attributes)
 
 ```bash

@@ -191,7 +191,10 @@ Apache-2.0.
   - positions strictly increase within a bar and stay below its length;
   - the time signature is locked to the requested meter; an unspecified meter is limited
     to 4/4, 3/4, 2/4 or 6/8;
-  - EOS is allowed only after the requested number of bars, and Bar only before it.
+  - EOS is allowed only after the requested number of bars, and Bar only before it;
+  - rest limit: the first bar must contain notes, and at most `max_empty_bars` (default 1)
+    silent bars may follow each other. Without it the melody model sometimes opened with
+    9–11 silent bars;
 - **Key bias.** Subtract `key_bias` from the logits of out-of-key pitches (natural and
   harmonic minor allowed).
 - **Sampling.** Temperature, top-k and top-p, implemented by the student in
@@ -254,10 +257,74 @@ three metrics, inference time.
 
 ## 9. Known limitations
 
-- Melodies only: no accompaniment or chords (the `piano` reduction mode is prepared but
-  not the default).
+- Melody mode writes one monophonic line. Ensemble mode (§10) adds up to four instruments
+  plus drums, but only 8 bars at a time, and has no velocity tokens: dynamics are a fixed
+  per-instrument level with beat accents.
 - Lyrics are reserved in the schema (`lyrics: null`) but not implemented.
 - Mood and genre labels come from audio classifiers run on MidiCaps renders; they are
   noisy.
 - MidiCaps captions are formulaic, so the template queries and a human-written test set
   matter for judging the parser.
+
+## 10. Ensemble (multi-instrument) mode
+
+Added 2026-11-22. Melody mode is unchanged: same vocabulary, data, checkpoints and results.
+
+| Part | Ensemble mode |
+|---|---|
+| Data | `music/ensemble.py` |
+| Labels | instruments and drums actually present in each window, most notes first; key, tempo, mood and genre from metadata |
+| Tokens | REMI with `Program_*` before every note (21 family programs + drums), `PitchDrum_*` for percussion, no velocity tokens. Vocabulary 504; prompt of 13 control tokens: key, meter, tempo, `INST1`–`INST4`, `DRUMS`, mood, genre, bars |
+| Model | the same Transformer, context 2,048 (26.5M parameters with the reference implementation); a medium config (12 x 768, about 86M) for larger GPUs |
+| Grammar | `SEP Bar TimeSig (Position (Program Pitch\|PitchDrum Duration)+)* ... EOS` |
+| Metrics | instrument precision / recall / F1, drums match, number of tracks, polyphony, track balance; key and repetition on pitched notes, repetition on the top line |
+| Rendering | each track with its family preset plus a synthesised drum kit (numpy), mixed |
+| Parser | `instruments` (list) and `drums` added to the JSON schema; the rule parser collects every instrument mention in order and "no drums" before "drums" |
+| UI | Melody / Ensemble switch, instrument chips (up to four, first = lead), drums toggle, coloured piano roll with a drum lane and a clickable legend |
+
+**Data preparation (`music/ensemble.py`)**
+1. Tracks are merged per instrument family, with at most 6 notes per onset.
+2. The 4 busiest families plus drums are kept.
+3. Non-overlapping 8-bar windows are cut, up to 6 per file.
+
+**Grammar constraints**
+- Only the requested families (and drums unless `drums: false`) may play.
+- Each family stays in its pitch range (e.g. bass 28–60) and plays at most 6 notes per
+  onset.
+- EOS waits until every requested part has played.
+- Unspecified requests are capped at 4 families.
+
+**Data (measured).**
+- 168,385 files in 318 s, 0 errors.
+- Windows: 654,645 / 13,915 / 73,791 (train / val / test), 625M training tokens
+  (5.3x melody mode).
+- Median window 919 tokens. 53,729 windows over 2,048 tokens were dropped (6.6%).
+- About 70% of windows have 3–4 instrument families, and 71% have drums.
+- Most common families: bass, piano, electric guitar, guitar, strings.
+
+## 11. Diffusion composer (experimental)
+
+Added 2026-11-23 (`src/tunesmith/diffusion/`). A second ensemble composer with a different
+architecture, trained on the same windows and conditioned on the same control tokens, so
+it can be compared with the ensemble Transformer on the same metrics. Instead of writing
+tokens left to right, it generates the whole 8-bar piece at once by denoising a piano roll.
+
+| Part | Diffusion composer |
+|---|---|
+| Representation (`roll.py`) | multi-track piano roll, 9 x 128 x 96: 8 bars of 4/4 on a sixteenth-note grid (128 frames) x MIDI pitches 20–115. Two channels (onset, sustain) per instrument slot, slots in the prompt's `INST1`–`INST4` order, plus one drum-onset channel. Onset and sustain follow Polyffusion (Min et al., 2023) |
+| Data (`data.py`) | decoded on the fly from the prepared ensemble tokens; 4/4 windows only (569,994 of 654,645 training windows). Transposition (pitched channels and the KEY token), attribute dropout and 10% unconditional examples, as for the Transformer |
+| Model (`unet.py`) | U-Net (Ronneberger et al., 2015) in the DDPM / ADM style: 4 levels (64/128/256/256 channels; 128x96 -> 16x12), 2 residual blocks per level, self-attention at 16x12 and in the middle, 26.6M parameters. The time step (sinusoidal + MLP) and the 11 control-token embeddings (concatenated, MLP) scale and shift every residual block |
+| Diffusion (`schedule.py`) | 1,000 steps, cosine noise schedule (Nichol & Dhariwal, 2021), noise-prediction MSE (Ho et al., 2020); EMA weights (0.9995) for sampling |
+| Sampling | DDIM (Song et al., 2021), 50 steps, classifier-free guidance on the noise estimate; the clean-roll estimate is clipped and masked at every step: unused slots, pitches outside each family's range and refused drums stay off |
+| Editing | inpainting by replacement: cells to keep are reset to the given roll at every step. Rewrites chosen bars (`--bars`) or every part except the kept ones (`--keep`, e.g. an accompaniment for a fixed melody). The token Transformer cannot do this without retraining |
+| Decoding | threshold 0.5; a note starts at an onset cell and lasts while sustain cells follow; at most 6 notes per onset per family; velocities from the ensemble playback dynamics |
+
+**What it cannot do (yet):** meters other than 4/4, lengths other than 8 bars, sub-sixteenth
+timing, velocities. Requests without instruments get a default band for their style
+(`roll.DEFAULT_BANDS`), because every channel group needs an instrument.
+
+**Cost (measured, RTX 4070 laptop, bf16).**
+- About 57 rolls/s in training; batch 16 peaks at 4.6 GB (batch 32 does not fit in 8 GB).
+- The configured 60,000 steps take about 4.6 h.
+- A 1,000-step smoke run lowered the loss from 1.00 to 0.08 and wrote valid multi-track
+  MIDI. The pieces were still far too dense at that point.
