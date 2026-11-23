@@ -2,11 +2,16 @@
 
 parser: rules                 # rules | lm (needs parser_base, optionally parser_adapter)
 parser_base: models/parser/base/Qwen2.5-0.5B-Instruct
-parser_adapter: models/parser/lora-r16   # ignored if the folder does not exist
+parser_adapter: models/parser/lora-r16-v2   # ignored if the folder does not exist
 parser_mode: lora             # zero | few | lora (lora falls back to few if no adapter)
 
 composer_checkpoint: models/composer/transformer-base/best.pt
-fallback_checkpoint: models/composer/gru-base/best.pt   # used until the Transformer is trained
+fallback_checkpoint:          # tried in order when composer_checkpoint is missing
+  - models/composer/transformer-ref/best.pt
+  - models/composer/gru-base/best.pt
+ensemble_checkpoint: models/composer/ensemble-ref/best.pt   # multi-instrument composer
+ensemble_fallback:
+  - models/composer/ensemble-medium/best.pt
 fallback_composer: markov     # used when the checkpoint is missing: markov | random
 device: auto                  # auto | cpu | cuda
 
@@ -16,9 +21,10 @@ rate_limit_per_minute: 30
 
 defaults:
   bars: 16
+  ensemble_bars: 8            # the ensemble composer is trained on 8-bar windows
   temperature: 1.0
   top_k: 0
-  top_p: 0.95
+  top_p: 1.0                  # lower values made melodies much more repetitive (README, composer results)
   cfg_scale: 1.5
   key_bias: 1.0               # logit penalty for out-of-key pitches (0 = off)
 

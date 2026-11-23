@@ -2,8 +2,11 @@
 
 Each instrument family maps to a preset of harmonic amplitudes and an ADSR envelope.
 It sounds like a simple keyboard, which is enough to audition melodies everywhere.
+`render_drums` synthesises a basic kit (sine-sweep kick, noise snare, hi-hats, toms, cymbals)
+for General MIDI drum notes, so ensemble pieces can be auditioned too.
 
-AI attribution: drafted with Claude Code (Claude Opus 5.5), 2026-11-10. See ATTRIBUTION.md.
+AI attribution: drafted with Claude Code (Claude Opus 5.5), 2026-11-10; drums and
+multi-track mixing added 2026-11-22. See ATTRIBUTION.md.
 """
 
 from __future__ import annotations
@@ -62,6 +65,60 @@ def render_notes(notes_s: list[tuple[float, float, int, int]], sample_rate: int 
         i0 = int(start * sample_rate)
         seg = (wave_ * env * (vel / 127.0) * 0.25).astype(np.float32)
         out[i0:i0 + len(seg)] += seg[: len(out) - i0]
+    peak = float(np.abs(out).max())
+    return out / peak * 0.9 if peak > 0 else out
+
+
+def _drum_hit(pitch: int, sample_rate: int, rng: np.random.Generator) -> np.ndarray:
+    """One drum sound for a General MIDI percussion note."""
+    if pitch in (35, 36):  # kick: falling sine
+        n = int(0.35 * sample_rate)
+        t = np.arange(n) / sample_rate
+        freq = 50 + 90 * np.exp(-t * 30)
+        return np.sin(2 * np.pi * np.cumsum(freq) / sample_rate) * np.exp(-t * 9)
+    if pitch in (38, 40, 37, 39):  # snare / clap: noise + body
+        n = int(0.2 * sample_rate)
+        t = np.arange(n) / sample_rate
+        return 0.6 * rng.standard_normal(n) * np.exp(-t * 22) + 0.4 * np.sin(2 * np.pi * 190 * t) * np.exp(-t * 30)
+    if pitch in (42, 44, 46):  # hi-hats: short (closed) or longer (open) high noise
+        n = int((0.25 if pitch == 46 else 0.06) * sample_rate)
+        noise = rng.standard_normal(n)
+        noise = np.diff(noise, prepend=0.0)  # crude high-pass
+        return 0.35 * noise * np.exp(-np.arange(n) / sample_rate * (12 if pitch == 46 else 60))
+    if pitch in (49, 51, 52, 55, 57, 59):  # cymbals
+        n = int(0.8 * sample_rate)
+        noise = np.diff(rng.standard_normal(n), prepend=0.0)
+        return 0.25 * noise * np.exp(-np.arange(n) / sample_rate * 4)
+    # toms and everything else: pitched decaying sine
+    n = int(0.3 * sample_rate)
+    t = np.arange(n) / sample_rate
+    f = 80 + 6 * (pitch - 41)
+    return 0.7 * np.sin(2 * np.pi * f * t) * np.exp(-t * 12)
+
+
+def render_drums(hits_s: list[tuple[float, int, int]], sample_rate: int = 44100, seed: int = 0) -> np.ndarray:
+    """hits_s: (start_seconds, pitch, velocity) -> mono float32 audio (not normalised)."""
+    if not hits_s:
+        return np.zeros(1, dtype=np.float32)
+    rng = np.random.default_rng(seed)
+    end = max(s for s, _, _ in hits_s) + 1.0
+    out = np.zeros(int(end * sample_rate) + 1, dtype=np.float32)
+    for start, pitch, vel in hits_s:
+        hit = (_drum_hit(int(pitch), sample_rate, rng) * (vel / 127.0) * 0.5).astype(np.float32)
+        i0 = int(start * sample_rate)
+        out[i0:i0 + len(hit)] += hit[: len(out) - i0]
+    return out
+
+
+def mix(tracks: list[np.ndarray], gains: list[float] | None = None) -> np.ndarray:
+    """Sum mono tracks of different lengths and normalise the peak to 0.9."""
+    tracks = [t for t in tracks if len(t)]
+    if not tracks:
+        return np.zeros(1, dtype=np.float32)
+    gains = gains or [1.0] * len(tracks)
+    out = np.zeros(max(len(t) for t in tracks), dtype=np.float32)
+    for t, g in zip(tracks, gains):
+        out[: len(t)] += g * t
     peak = float(np.abs(out).max())
     return out / peak * 0.9 if peak > 0 else out
 

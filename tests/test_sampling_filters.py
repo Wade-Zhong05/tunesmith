@@ -1,22 +1,29 @@
-"""Checks for the student-implemented sampling filters (src/tunesmith/model/sampling_filters.py).
+"""Checks for the sampling filters, run against both implementations:
+`student` (src/tunesmith/model/sampling_filters.py, skipped while a function still raises
+NotImplementedError) and `reference` (src/tunesmith/model/sampling_filters_ref.py).
 
-Skipped while a function still raises NotImplementedError.
+    pixi run pytest tests/test_sampling_filters.py -q -rs
+    pixi run pytest tests/test_sampling_filters.py -q -k student
 
-    pixi run pytest tests/test_sampling_filters.py -q
-
-AI attribution: drafted with Claude Code (Claude Opus 5.5), 2026-11-10. See ATTRIBUTION.md.
+AI attribution: drafted with Claude Code (Claude Opus 5.5), 2026-11-10; parametrised over both
+implementations on 2026-11-23. See ATTRIBUTION.md.
 """
 
 from __future__ import annotations
 
+import importlib
 import math
 
 import pytest
 import torch
 
-from tunesmith.model import sampling_filters as sf
-
 NEG = float("-inf")
+IMPLS = {"student": "tunesmith.model.sampling_filters", "reference": "tunesmith.model.sampling_filters_ref"}
+
+
+@pytest.fixture(params=list(IMPLS), ids=list(IMPLS))
+def sf(request):
+    return importlib.import_module(IMPLS[request.param])
 
 
 def todo(fn, *args):
@@ -26,12 +33,12 @@ def todo(fn, *args):
         pytest.skip(f"not implemented yet: {e}")
 
 
-def test_temperature():
+def test_temperature(sf):
     out = todo(sf.apply_temperature, torch.tensor([[1.0, 2.0, 3.0]]), 2.0)
     assert torch.allclose(out, torch.tensor([[0.5, 1.0, 1.5]]))
 
 
-def test_top_k_keeps_k_largest_per_row():
+def test_top_k_keeps_k_largest_per_row(sf):
     logits = torch.tensor([[1.0, 4.0, 2.0, 3.0], [0.0, -1.0, 5.0, 2.0]])
     out = todo(sf.top_k_filter, logits, 2)
     kept = torch.isfinite(out)
@@ -40,7 +47,7 @@ def test_top_k_keeps_k_largest_per_row():
     assert torch.equal(todo(sf.top_k_filter, logits, 10), logits)
 
 
-def test_top_p_smallest_nucleus():
+def test_top_p_smallest_nucleus(sf):
     probs = torch.tensor([[0.15, 0.5, 0.05, 0.3]])
     logits = probs.log()
     out = todo(sf.top_p_filter, logits, 0.7)
@@ -51,13 +58,13 @@ def test_top_p_smallest_nucleus():
     assert torch.isfinite(out).all()
 
 
-def test_filters_keep_masked_tokens_masked():
+def test_filters_keep_masked_tokens_masked(sf):
     logits = torch.tensor([[NEG, 1.0, 2.0, NEG, 0.5]])
     for out in (todo(sf.top_k_filter, logits, 4), todo(sf.top_p_filter, logits, 0.999)):
         assert math.isinf(out[0, 0].item()) and math.isinf(out[0, 3].item())
 
 
-def test_sample_next_uses_filters():
+def test_sample_next_uses_filters(sf):
     torch.manual_seed(0)
     logits = torch.tensor([[0.0, 3.0, 2.9, -5.0]]).repeat(200, 1)
     try:

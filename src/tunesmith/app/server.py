@@ -7,7 +7,9 @@ Endpoints:
     GET  /api/health    model status
     GET  /api/options   allowed attribute values (for the override menus)
     POST /api/parse     {"text"} -> attributes
-    POST /api/generate  {"text", "overrides", "n", "seed", sampling options} -> pieces
+    POST /api/generate  {"text", "mode", "overrides", "n", "seed", sampling options} -> pieces
+                        mode: "melody" (one part) | "ensemble" (up to 4 instruments + drums);
+                        "instrumental" is an alias of "melody"
     GET  /files/<name>  generated MIDI / WAV
 
 Production touches: input validation, a per-client rate limit, one model lock, request
@@ -29,7 +31,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from ..attributes import BARS, GENRES, INSTRUMENTS, KEYS, METERS, MOODS, TEMPO_BINS
+from ..attributes import BARS, COMPOSER_MODES, GENRES, INSTRUMENTS, KEYS, MAX_INSTRUMENTS, METERS, MOODS, TEMPO_BINS
 from ..paths import ROOT, load_yaml, resolve
 
 log = logging.getLogger("tunesmith.app")
@@ -41,7 +43,7 @@ class ParseRequest(BaseModel):
 
 class GenerateRequest(BaseModel):
     text: str = Field("", max_length=2000)
-    mode: Literal["instrumental", "lyrics"] = "instrumental"
+    mode: Literal["melody", "ensemble", "instrumental", "lyrics"] = "melody"
     overrides: dict[str, Any] = Field(default_factory=dict)
     n: int = Field(1, ge=1, le=4)
     seed: Optional[int] = Field(None, ge=0, le=2**31 - 1)
@@ -99,12 +101,13 @@ def create_app(config: str | dict[str, Any] = "configs/app.yaml", smith=None) ->
     def health() -> dict[str, Any]:
         s = get_smith()
         return {"ok": True, "parser": s.parser_name, "composer": s.composer_name, "trained": s.trained,
-                "device": str(s.device), "warnings": s.warnings}
+                "composers": s.status(), "device": str(s.device), "warnings": s.warnings}
 
     @app.get("/api/options")
     def options() -> dict[str, Any]:
         return {"key": list(KEYS), "meter": list(METERS[:4]), "instrument": list(INSTRUMENTS), "mood": list(MOODS),
-                "genre": list(GENRES), "bars": list(BARS),
+                "genre": list(GENRES), "bars": list(BARS), "modes": list(COMPOSER_MODES),
+                "max_instruments": MAX_INSTRUMENTS, "drums": [True, False],
                 "tempo": [{"name": n, "bpm": rep} for n, _, _, rep in TEMPO_BINS]}
 
     @app.post("/api/parse")
@@ -122,18 +125,19 @@ def create_app(config: str | dict[str, Any] = "configs/app.yaml", smith=None) ->
             raise HTTPException(422, f"text longer than {max_chars} characters")
         if req.mode == "lyrics":
             raise HTTPException(400, "lyrics mode is coming later; the instrumental version comes first")
+        mode = "melody" if req.mode == "instrumental" else req.mode
         t0 = time.time()
         try:
             res = get_smith().compose(req.text, overrides=req.overrides, n=req.n, seed=req.seed,
                                       temperature=req.temperature, top_k=req.top_k, top_p=req.top_p,
-                                      cfg_scale=req.cfg_scale, key_bias=req.key_bias)
+                                      cfg_scale=req.cfg_scale, key_bias=req.key_bias, mode=mode)
         except ValueError as e:
             raise HTTPException(400, str(e)) from e
         for p in res["pieces"]:
             p["midi_url"] = f"/files/{p['midi']}"
             if "wav" in p:
                 p["wav_url"] = f"/files/{p['wav']}"
-        log.info("generate client=%s chars=%d n=%d attrs=%s %.2fs", client, len(req.text), req.n,
+        log.info("generate client=%s mode=%s chars=%d n=%d attrs=%s %.2fs", client, mode, len(req.text), req.n,
                  {k: v for k, v in res["attributes"].items() if v is not None}, time.time() - t0)
         return res
 

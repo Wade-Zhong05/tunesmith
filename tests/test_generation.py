@@ -12,7 +12,7 @@ from tunesmith.eval.baselines import BigramComposer, UniformComposer
 from tunesmith.eval.metrics import music_metrics
 from tunesmith.model import build_model
 from tunesmith.model.generate import generate
-from tunesmith.tokenizer import T_BAR, T_TIMESIG
+from tunesmith.tokenizer import T_BAR, T_PITCH, T_TIMESIG
 
 
 def test_uniform_composer_respects_grammar(tok):
@@ -61,3 +61,35 @@ def test_bigram_fit(tok, synth_data):
     assert a.bars == 8  # bar counts snap to the nearest of 8 / 16 / 32
     seqs = generate(model, tok, [a], seed=0)
     assert sum(tok.types[i] == T_BAR for i in seqs[0]) == 8
+
+
+class _RestLover(UniformComposer):
+    """A model that always wants to close the bar, i.e. writes silent bars if it may."""
+
+    def __init__(self, tok):
+        super().__init__(tok.vocab_size)
+        self.bias = torch.zeros(tok.vocab_size)
+        self.bias[torch.from_numpy(tok.types == T_BAR)] = 50.0
+
+    def forward(self, idx, past_kv=None, use_cache=False):
+        return self.bias.expand(*idx.shape, -1).clone(), None
+
+
+def _notes_per_bar(tok, seq):
+    counts = []
+    for i in seq:
+        if tok.types[i] == T_BAR:
+            counts.append(0)
+        elif tok.types[i] == T_PITCH and counts:
+            counts[-1] += 1
+    return counts
+
+
+def test_grammar_limits_silent_bars(tok):
+    model = _RestLover(tok)
+    attrs = [MusicAttributes(meter="4/4", bars=16)]
+    limited = _notes_per_bar(tok, generate(model, tok, attrs, seed=0)[0])
+    assert len(limited) == 16 and limited[0] > 0  # the piece starts in bar 1
+    assert all(a > 0 or b > 0 for a, b in zip(limited, limited[1:]))  # never two silent bars in a row
+    free = _notes_per_bar(tok, generate(model, tok, attrs, seed=0, max_empty_bars=None)[0])
+    assert len(free) == 16 and free[:-1] == [0] * 15  # without the limit the model only rests

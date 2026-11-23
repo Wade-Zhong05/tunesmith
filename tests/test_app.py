@@ -68,3 +68,25 @@ def test_smoke_pipeline_with_trained_gru(tmp_path):
 
     res = run("gru", steps=10, root=str(tmp_path / "smoke"))
     assert res["trained"] and len(res["pieces"]) == 2
+
+
+def test_api_ensemble_mode(tmp_path):
+    cfg = app_config(tmp_path, ensemble_checkpoint=str(tmp_path / "missing_ens.pt"), ensemble_fallback=None)
+    client = TestClient(create_app(cfg))
+    opts = client.get("/api/options").json()
+    assert "ensemble" in opts["modes"] and opts["max_instruments"] == 4
+    r = client.post("/api/generate", json={"text": "a band with piano, strings and bass, with drums", "mode": "ensemble",
+                                            "n": 1, "seed": 2})
+    assert r.status_code == 200, r.text
+    res = r.json()
+    assert res["mode"] == "ensemble" and res["attributes"]["instruments"] == ["piano", "strings", "bass"]
+    piece = res["pieces"][0]
+    families = {t["family"] for t in piece["tracks"]}
+    assert families == {"piano", "strings", "bass", "drums"}
+    assert piece["metrics"]["bars"] == 8 and piece["metrics"]["instrument_recall"] == 1.0
+    assert {t["name"] for t in piece["notes"]["tracks"]} == families
+    assert client.get(piece["wav_url"]).content[:4] == b"RIFF"
+    legacy = client.post("/api/generate", json={"text": "short piano", "mode": "instrumental", "n": 1})
+    assert legacy.status_code == 200 and legacy.json()["mode"] == "melody"
+    health = client.get("/api/health").json()
+    assert health["composers"]["ensemble"]["loaded"] is True

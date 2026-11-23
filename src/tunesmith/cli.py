@@ -20,6 +20,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--parser", default=None, choices=["rules", "lm"])
     g = sub.add_parser("generate", help="text -> MIDI + WAV")
     g.add_argument("text")
+    g.add_argument("--mode", default="melody", choices=["melody", "ensemble"])
     g.add_argument("--n", type=int, default=1)
     g.add_argument("--seed", type=int)
     g.add_argument("--config", default="configs/app.yaml")
@@ -43,7 +44,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.checkpoint:
         cfg["composer_checkpoint"] = args.checkpoint
     smith = TuneSmith(cfg)
-    res = smith.compose(args.text, n=args.n, seed=args.seed, render=not args.no_wav)
+    res = smith.compose(args.text, n=args.n, seed=args.seed, render=not args.no_wav, mode=args.mode)
     print(f"parser: {res['parser']}   composer: {res['composer']}")
     print("attributes:", json.dumps({k: v for k, v in res["attributes"].items() if v is not None}))
     for p in res["pieces"]:
