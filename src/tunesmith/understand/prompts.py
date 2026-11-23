@@ -16,12 +16,14 @@ from ..paths import CONFIGS, load_yaml
 
 SYSTEM_PROMPT = (
     "You convert a description of a piece of instrumental music into JSON "
-    "with exactly these keys: key, tempo_bpm, meter, instrument, mood, genre, bars.\n"
+    "with exactly these keys: key, tempo_bpm, meter, instrument, instruments, drums, mood, genre, bars.\n"
     "Use null for anything the description does not say or clearly imply. Allowed values:\n"
     f"- key: one of {', '.join(KEYS)}\n"
     "- tempo_bpm: integer beats per minute (slow about 70, moderate about 90, fast about 130)\n"
     f"- meter: one of {', '.join(METERS)}\n"
-    f"- instrument: one of {', '.join(INSTRUMENTS)}\n"
+    f"- instrument: one of {', '.join(INSTRUMENTS)} (the main instrument)\n"
+    "- instruments: list of up to 4 of the same values, in order of mention\n"
+    "- drums: true if drums or percussion are wanted, false if explicitly not wanted\n"
     f"- mood: one of {', '.join(MOODS)}\n"
     f"- genre: one of {', '.join(GENRES)}\n"
     f"- bars: one of {', '.join(map(str, BARS))}\n"
@@ -29,9 +31,10 @@ SYSTEM_PROMPT = (
 )
 
 # Shorter instruction used for (and after) LoRA fine-tuning: the schema is learned.
-LORA_SYSTEM_PROMPT = "Extract music attributes as JSON (key, tempo_bpm, meter, instrument, mood, genre, bars)."
+LORA_SYSTEM_PROMPT = ("Extract music attributes as JSON "
+                      "(key, tempo_bpm, meter, instrument, instruments, drums, mood, genre, bars).")
 
-FIELDS = ("key", "tempo_bpm", "meter", "instrument", "mood", "genre", "bars")
+FIELDS = ("key", "tempo_bpm", "meter", "instrument", "instruments", "drums", "mood", "genre", "bars")
 
 
 def target_json(target: dict[str, Any]) -> str:

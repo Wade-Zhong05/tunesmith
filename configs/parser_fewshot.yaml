@@ -1,12 +1,12 @@
 # Few-shot examples for the LLM parser (prompting baselines). JSON targets use the attribute schema.
 examples:
   - text: "A gentle piano lullaby in C major, slow and peaceful, waltz time."
-    target: {key: "C major", tempo_bpm: 66, meter: "3/4", instrument: piano, mood: calm, genre: null, bars: null}
-  - text: "Energetic electronic track with a synth lead at 128 bpm"
-    target: {key: null, tempo_bpm: 128, meter: null, instrument: synth_lead, mood: energetic, genre: electronic, bars: null}
+    target: {key: "C major", tempo_bpm: 66, meter: "3/4", instrument: piano, instruments: [piano], drums: null, mood: calm, genre: null, bars: null}
+  - text: "Energetic electronic track with a synth lead, bass and drums at 128 bpm"
+    target: {key: null, tempo_bpm: 128, meter: null, instrument: synth_lead, instruments: [synth_lead, bass], drums: true, mood: energetic, genre: electronic, bars: null}
   - text: "Something sad on the cello, like a rainy afternoon, in A minor, about 16 bars"
-    target: {key: "A minor", tempo_bpm: null, meter: null, instrument: cello, mood: sad, genre: null, bars: 16}
-  - text: "A cheerful folk tune on the koto, fast"
-    target: {key: null, tempo_bpm: 130, meter: null, instrument: ethnic, mood: happy, genre: folk, bars: null}
-  - text: "Write a short romantic violin piece in D major"
-    target: {key: "D major", tempo_bpm: null, meter: null, instrument: violin, mood: romantic, genre: null, bars: 8}
+    target: {key: "A minor", tempo_bpm: null, meter: null, instrument: cello, instruments: [cello], drums: null, mood: sad, genre: null, bars: 16}
+  - text: "A cheerful folk tune for koto and flute, fast, no drums"
+    target: {key: null, tempo_bpm: 130, meter: null, instrument: ethnic, instruments: [ethnic, flute], drums: false, mood: happy, genre: folk, bars: null}
+  - text: "Write a short romantic piece for violin, piano and strings in D major"
+    target: {key: "D major", tempo_bpm: null, meter: null, instrument: violin, instruments: [violin, piano, strings], drums: null, mood: romantic, genre: null, bars: 8}

@@ -14,7 +14,7 @@ import ast
 import re
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 # ---------------------------------------------------------------- vocabularies
 
@@ -96,6 +96,20 @@ MIDICAPS_GENRE_MAP = {
 }
 
 CONTROL_FIELDS = ("key", "meter", "tempo", "instrument", "mood", "genre", "bars")
+
+# Ensemble (multi-instrument) mode: up to four pitched instrument families plus a drums flag.
+MAX_INSTRUMENTS = 4
+ENSEMBLE_FIELDS = ("key", "meter", "tempo", "inst1", "inst2", "inst3", "inst4", "drums", "mood", "genre", "bars")
+COMPOSER_MODES = ("melody", "ensemble")
+
+
+def control_fields(mode: str = "melody") -> tuple[str, ...]:
+    """Control fields in prompt order for a composer mode."""
+    if mode == "melody":
+        return CONTROL_FIELDS
+    if mode == "ensemble":
+        return ENSEMBLE_FIELDS
+    raise ValueError(f"unknown composer mode {mode!r}")
 
 KeyName = Literal[KEYS]
 MeterName = Literal[METERS]
@@ -225,6 +239,8 @@ class MusicAttributes(BaseModel):
     mood: Optional[MoodName] = None
     genre: Optional[GenreName] = None
     bars: Optional[BarsCount] = None
+    instruments: Optional[list[InstrumentName]] = None  # ensemble mode: families, most prominent first
+    drums: Optional[bool] = None                         # ensemble mode: drum track wanted?
     lyrics: Optional[str] = None
 
     @field_validator("key", mode="before")
@@ -262,6 +278,42 @@ class MusicAttributes(BaseModel):
         n = int(v)
         return min(BARS, key=lambda b: abs(b - n))
 
+    @field_validator("instruments", mode="before")
+    @classmethod
+    def _instruments(cls, v):
+        """Lenient list: unknown names are dropped, duplicates removed, at most four kept."""
+        if v is None or v == "":
+            return None
+        if isinstance(v, str):
+            v = v.replace(";", ",").split(",")
+        out: list[str] = []
+        for item in v:
+            name = str(item).strip().lower().replace(" ", "_")
+            if name in INSTRUMENTS and name not in out:
+                out.append(name)
+        return out[:MAX_INSTRUMENTS] or None
+
+    @field_validator("drums", mode="before")
+    @classmethod
+    def _drums(cls, v):
+        if v is None or v == "":
+            return None
+        if isinstance(v, str):
+            s = v.strip().lower()
+            if s in ("yes", "true", "1", "on"):
+                return True
+            if s in ("no", "false", "0", "off"):
+                return False
+            raise ValueError(f"not a drums flag: {v!r}")
+        return bool(v)
+
+    @model_validator(mode="after")
+    def _first_instrument(self):
+        # melody mode reads `instrument`; fill it from the ensemble list when it is missing
+        if self.instrument is None and self.instruments:
+            self.instrument = self.instruments[0]
+        return self
+
     @field_validator("instrument", "mood", "genre", mode="before")
     @classmethod
     def _lower(cls, v):
@@ -288,21 +340,30 @@ class MusicAttributes(BaseModel):
         if not overrides:
             return self.model_copy()
         data = self.model_dump()
-        data.update({k: v for k, v in overrides.items() if v not in (None, "")})
+        ov = {k: v for k, v in overrides.items() if v is not None and v != "" and v != []}
+        if "instruments" in ov and "instrument" not in ov:
+            data["instrument"] = None  # re-derived from the new list
+        data.update(ov)
         return MusicAttributes.lenient(data)
 
     def field_value(self, field: str) -> Optional[str]:
         """String value of a control field ('tempo' is binned)."""
         if field == "tempo":
             return tempo_bin(self.tempo_bpm)
+        if field.startswith("inst") and field[4:].isdigit():
+            insts = self.instruments or ([self.instrument] if self.instrument else [])
+            i = int(field[4:]) - 1
+            return insts[i] if i < len(insts) else None
+        if field == "drums":
+            return None if self.drums is None else ("yes" if self.drums else "no")
         v = getattr(self, field)
         if v is None:
             return None
         return str(v).replace(" ", "_")
 
-    def control_tokens(self) -> list[str]:
+    def control_tokens(self, mode: str = "melody") -> list[str]:
         out = []
-        for field in CONTROL_FIELDS:
+        for field in control_fields(mode):
             v = self.field_value(field)
             out.append(f"{field.upper()}_{v if v is not None else 'NULL'}")
         return out
@@ -312,8 +373,8 @@ class MusicAttributes(BaseModel):
         return ", ".join(parts) if parts else "(no attributes)"
 
 
-def control_vocab() -> dict[str, list[str]]:
-    """All control tokens per field, NULL first."""
+def control_vocab(mode: str = "melody") -> dict[str, list[str]]:
+    """All control tokens per field of a mode, NULL first (melody order is unchanged)."""
     values = {
         "key": [k.replace(" ", "_") for k in KEYS],
         "meter": list(METERS),
@@ -322,8 +383,10 @@ def control_vocab() -> dict[str, list[str]]:
         "mood": list(MOODS),
         "genre": list(GENRES),
         "bars": [str(b) for b in BARS],
+        "drums": ["yes", "no"],
+        **{f"inst{i}": list(INSTRUMENTS) for i in range(1, MAX_INSTRUMENTS + 1)},
     }
-    return {f: [f"{f.upper()}_NULL"] + [f"{f.upper()}_{v}" for v in values[f]] for f in CONTROL_FIELDS}
+    return {f: [f"{f.upper()}_NULL"] + [f"{f.upper()}_{v}" for v in values[f]] for f in control_fields(mode)}
 
 
 def from_midicaps(row: dict[str, Any]) -> MusicAttributes:
@@ -336,20 +399,23 @@ def from_midicaps(row: dict[str, Any]) -> MusicAttributes:
     except (TypeError, ValueError):
         tempo = None
     meter = normalize_meter(row.get("time_signature"))
-    instrument = None
-    for prog in _as_list(row.get("instrument_numbers_sorted")):
+    families: list[str] = []
+    drums: Optional[bool] = None
+    for prog in _as_list(row.get("instrument_numbers_sorted")):  # MidiCaps: 128 = drums
         try:
             prog = int(prog)
         except (TypeError, ValueError):
             continue
-        if prog < 128:
-            instrument = program_to_family(prog)
-            if instrument:
-                break
+        drums = bool(drums) or prog >= 128
+        family = program_to_family(prog) if prog < 128 else None
+        if family and family not in families:
+            families.append(family)
+    instrument = families[0] if families else None
     mood = next((MIDICAPS_MOOD_MAP[m] for m in map(str, _as_list(row.get("mood")))
                  if m.lower() in MIDICAPS_MOOD_MAP), None)
     genre = next((MIDICAPS_GENRE_MAP[g.lower().replace("/", "").replace(" ", "")]
                   for g in map(str, _as_list(row.get("genre")))
                   if g.lower().replace("/", "").replace(" ", "") in MIDICAPS_GENRE_MAP), None)
     return MusicAttributes(key=key, tempo_bpm=tempo, meter=meter, instrument=instrument,
+                           instruments=families[:MAX_INSTRUMENTS] or None, drums=drums,
                            mood=mood, genre=genre)

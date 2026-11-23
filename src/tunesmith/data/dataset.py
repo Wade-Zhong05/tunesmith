@@ -22,7 +22,6 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from ..attributes import CONTROL_FIELDS
 from ..tokenizer import TuneTokenizer
 
 IGNORE = -100
@@ -34,16 +33,31 @@ class TokenDataset(Dataset):
         data_dir = Path(data_dir)
         self.tok = tok
         self.index = np.load(data_dir / f"index_{split}.npy")
-        bin_path = data_dir / f"tokens_{split}.bin"
-        self.tokens = (np.memmap(bin_path, dtype=np.uint16, mode="r")
-                       if bin_path.stat().st_size > 0 else np.zeros(0, dtype=np.uint16))
+        self.bin_path = data_dir / f"tokens_{split}.bin"
+        self.tokens = self._open_tokens()
         self.augment = augment or None
-        self.slots = [tok.slot(f) for f in CONTROL_FIELDS]
-        self.nulls = np.array([tok.null_id(f) for f in CONTROL_FIELDS], dtype=np.int64)
+        self.slots = [tok.slot(f) for f in tok.fields]  # control-token positions for this mode
+        self.nulls = np.array([tok.null_id(f) for f in tok.fields], dtype=np.int64)
         self.tables: dict[int, np.ndarray] = {}
         if self.augment:
             lo, hi = self.augment.get("transpose_range", [0, 0])
             self.tables = {k: tok.transpose_table(k) for k in range(int(lo), int(hi) + 1) if k != 0}
+
+    def _open_tokens(self) -> np.ndarray:
+        if self.bin_path.stat().st_size == 0:
+            return np.zeros(0, dtype=np.uint16)
+        return np.memmap(self.bin_path, dtype=np.uint16, mode="r")
+
+    def __getstate__(self) -> dict[str, Any]:
+        # DataLoader workers on Windows receive the dataset by pickling. Pickling a memmap copies
+        # the whole token file (1.25 GB for the ensemble data), so send the path and reopen it.
+        state = self.__dict__.copy()
+        state["tokens"] = None
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        self.__dict__.update(state)
+        self.tokens = self._open_tokens()
 
     def __len__(self) -> int:
         return len(self.index)

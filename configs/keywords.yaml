@@ -75,6 +75,10 @@ bars:
   "16": [16 bars, 16 measures]
   "32": [long, extended, 32 bars, 32 measures]
 
+drums:      # ensemble mode: is a drum track wanted? ("no" phrases are matched first)
+  "no": [no drums, without drums, drumless, no percussion, without percussion]
+  "yes": [drums, drum kit, drum beat, percussion, with a beat]
+
 patterns:   # regex fragments used by the rule parser
   bpm_units: [bpm, beats per minute]
   bar_units: [bars, bar, measures, measure]

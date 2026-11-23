@@ -28,6 +28,7 @@ import numpy as np
 
 from ..attributes import from_midicaps, normalize_meter, program_to_family
 from ..music.keyfinding import detect_key
+from ..music.ensemble import ensemble_windows
 from ..music.melody import load_score, windows
 from ..paths import load_yaml, read_jsonl, resolve, save_json
 from ..tokenizer import TuneTokenizer
@@ -64,6 +65,8 @@ def process_row(row: dict[str, Any]) -> dict[str, Any]:
         return {**info, "error": f"metadata: {type(e).__name__}", "seqs": []}
     info["attrs"] = base.model_dump()
     rng = random.Random(int(stable_fraction(location) * 1e9) ^ int(cfg["seed"]))
+    if cfg["reduce"] == "ensemble":
+        return _process_ensemble(score, base, info, cfg, tok, rng)
     try:
         excerpts = windows(score, list(cfg["window_bars"]), cfg["reduce"], int(cfg["max_windows_per_file"]),
                            int(cfg["min_notes_per_window"]), rng)
@@ -91,6 +94,41 @@ def process_row(row: dict[str, Any]) -> dict[str, Any]:
     return {**info, "seqs": seqs}
 
 
+def _process_ensemble(score, base, info, cfg, tok, rng) -> dict[str, Any]:
+    """Ensemble mode: multi-instrument windows; instrument and drum labels come from the window."""
+    try:
+        excerpts = ensemble_windows(score, list(cfg["window_bars"]), int(cfg.get("max_families", 4)),
+                                    int(cfg["max_windows_per_file"]), int(cfg["min_notes_per_window"]),
+                                    max_poly=int(cfg.get("max_polyphony", 6)), rng=rng)
+    except Exception as e:
+        return {**info, "error": f"windows: {type(e).__name__}", "seqs": []}
+    seqs, too_long = [], 0
+    for ex in excerpts:
+        families = ex.families
+        update = {
+            "bars": ex.bars,
+            "meter": normalize_meter(f"{ex.numerator}/{ex.denominator}"),
+            "instruments": families or None,
+            "instrument": families[0] if families else None,
+            "drums": bool(ex.drums),
+        }
+        if cfg["key_source"] == "detected":
+            key, corr = detect_key(ex.pitched_notes)
+            if key and corr > 0.5:
+                update["key"] = key
+        attrs = base.model_copy(update=update)
+        try:
+            ids = tok.encode(ex.to_score(), attrs)
+        except Exception:
+            continue
+        if len(ids) > int(cfg["max_seq_len"]):
+            too_long += 1
+        elif len(ids) > tok.prompt_len + 4:
+            seqs.append(np.asarray(ids, dtype=np.uint16))
+    info["n_windows"] = len(seqs)
+    return {**info, "seqs": seqs, "too_long": too_long}
+
+
 def _batched(it: Iterable, n: int) -> Iterator[list]:
     batch = []
     for x in it:
@@ -106,6 +144,8 @@ def prepare(cfg: dict[str, Any], limit: int | None = None) -> dict[str, Any]:
     out_dir = resolve(cfg["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
     cfg = {**cfg, "midi_root": str(resolve(cfg["midi_root"]))}
+    if cfg.get("reduce") == "ensemble":  # the ensemble reduction needs the multi-program vocabulary
+        cfg["tokenizer"] = {**cfg["tokenizer"], "mode": "ensemble"}
     tok = TuneTokenizer(cfg["tokenizer"])
 
     rows = ({k: r.get(k) for k in KEEP_FIELDS} for r in read_jsonl(cfg["metadata"]))
@@ -116,7 +156,8 @@ def prepare(cfg: dict[str, Any], limit: int | None = None) -> dict[str, Any]:
     files = {s: open(out_dir / f"files_{s}.jsonl", "w", encoding="utf-8") for s in SPLITS}
     index: dict[str, list[tuple[int, int]]] = {s: [] for s in SPLITS}
     offsets = {s: 0 for s in SPLITS}
-    stats = {"files": 0, "errors": 0, "files_without_windows": 0, "tokens": {s: 0 for s in SPLITS}}
+    stats = {"files": 0, "errors": 0, "files_without_windows": 0, "windows_too_long": 0,
+             "tokens": {s: 0 for s in SPLITS}}
     workers = int(cfg.get("workers") or 0) or max(1, (os.cpu_count() or 2) - 1)
     t0 = time.time()
 
@@ -128,6 +169,7 @@ def prepare(cfg: dict[str, Any], limit: int | None = None) -> dict[str, Any]:
             stats["errors"] += 1
             return
         split = result["split"]
+        stats["windows_too_long"] += result.get("too_long", 0)
         if not result["seqs"]:
             stats["files_without_windows"] += 1
         for arr in result["seqs"]:
@@ -181,7 +223,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--limit", type=int)
     ap.add_argument("--workers", type=int)
     ap.add_argument("--key-source", choices=["metadata", "detected"])
-    ap.add_argument("--reduce", choices=["melody", "piano"])
+    ap.add_argument("--reduce", choices=["melody", "piano", "ensemble"])
     ap.add_argument("--val-fraction", type=float)
     args = ap.parse_args(argv)
     cfg = load_yaml(args.config)

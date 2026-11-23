@@ -62,6 +62,20 @@ def find_first(text: str, table: dict[str, list[str]]) -> tuple[Optional[str], O
     return (best[2], best_span) if best else (None, None)
 
 
+def find_all(text: str, table: dict[str, list[str]], limit: int = 4) -> tuple[list[str], str]:
+    """Distinct values in order of first mention (longest keyword first at each spot), at most
+    `limit`; returns (values, text with every match blanked)."""
+    found: list[str] = []
+    while len(found) < limit:
+        value, span = find_first(text, table)
+        if value is None:
+            break
+        text = _blank(text, span)
+        if value not in found:
+            found.append(value)
+    return found, text
+
+
 def _blank(text: str, span: tuple[int, int]) -> str:
     return text[: span[0]] + " " * (span[1] - span[0]) + text[span[1]:]
 
@@ -100,7 +114,18 @@ def parse(text: str, keywords: Optional[dict] = None) -> MusicAttributes:
         data["meter"] = normalize_meter(f"{m.group(1)}/{m.group(2)}")
         t = _blank(t, m.span())
 
-    for field in ("instrument", "mood", "genre"):
+    instruments, t = find_all(t, kw["instrument"])
+    if instruments:
+        data["instruments"] = instruments
+        data["instrument"] = instruments[0]
+    if "drums" in kw:
+        for flag in ("no", "yes"):  # negated phrases first ("no drums" contains "drums")
+            value, span = find_first(t, {flag: kw["drums"][flag]})
+            if value:
+                data["drums"] = flag == "yes"
+                t = _blank(t, span)
+                break
+    for field in ("mood", "genre"):
         value, span = find_first(t, kw[field])
         if value:
             data[field] = value

@@ -16,3 +16,9 @@ templates:
   - "{genre} melody, {tempo}, {meter}"
   - "can you make a {mood} {genre} tune in {key}?"
   - "{bars} bars of {mood} {instrument} in {meter}"
+  # several instruments (ensemble mode); {instrument2}/{instrument3} differ from {instrument}
+  - "{instrument} and {instrument2} playing a {mood} {genre} tune"
+  - "a {tempo} groove for {instrument}, {instrument2} and {instrument3} {drums}"
+  - "{mood} trio: {instrument}, {instrument2}, {instrument3}"
+  - "a band with {instrument} and {instrument2}, {drums}"
+  - "{genre} track in {key} with {instrument}, {instrument2} {drums}"

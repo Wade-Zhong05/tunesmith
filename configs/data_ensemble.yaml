@@ -1,0 +1,25 @@
+# Data preparation for the ensemble (multi-instrument) composer.
+# MidiCaps -> up to 4 instrument families + drums -> 8-bar windows -> REMI tokens with Program tokens.
+# Used by `pixi run prepare-data --config configs/data_ensemble.yaml`.
+
+metadata: data/raw/midicaps/train.json
+midi_root: data/raw/midicaps
+out_dir: data/processed/midicaps_ensemble
+
+reduce: ensemble          # see src/tunesmith/music/ensemble.py
+window_bars: [8]          # ensemble windows are about 5x longer than melody windows
+max_windows_per_file: 6
+min_notes_per_window: 16
+max_families: 4           # pitched instrument families kept per file (plus drums)
+max_polyphony: 6          # notes per onset per family
+max_seq_len: 2048         # longer windows are dropped (counted as windows_too_long)
+key_source: metadata
+val_fraction: 0.02
+seed: 0
+workers: 0                # 0 = cpu_count - 1
+
+tokenizer:
+  mode: ensemble          # Program + PitchDrum tokens, no velocity tokens
+  pitch_range: [21, 109]
+  beat_res: {"0_4": 8, "4_12": 4}
+  num_velocities: 8

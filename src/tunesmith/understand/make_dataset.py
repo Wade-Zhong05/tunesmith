@@ -27,7 +27,7 @@ from ..attributes import BARS, INSTRUMENTS, KEYS, METERS, MOODS, GENRES, TEMPO_B
 from ..data.splits import split_of
 from ..paths import CONFIGS, load_yaml, read_jsonl, resolve, save_json, write_jsonl
 from .prompts import FIELDS
-from .rules import find_first, load_keywords, mentions
+from .rules import find_all, find_first, load_keywords, mentions
 
 
 def clean_target(caption: str, row: dict[str, Any], kw: dict) -> dict[str, Any]:
@@ -36,9 +36,15 @@ def clean_target(caption: str, row: dict[str, Any], kw: dict) -> dict[str, Any]:
     for field in ("key", "tempo_bpm", "meter", "mood", "genre"):
         if attrs.get(field) is not None and mentions(caption, field, attrs[field], kw):
             target[field] = attrs[field]
-    # instrument: the first instrument the caption names (the lead, from the user's point of view)
-    inst, _ = find_first(caption, kw["instrument"])
-    target["instrument"] = inst
+    # instruments: the instruments the caption names, in order (the first is the lead)
+    instruments, _ = find_all(caption, kw["instrument"])
+    target["instrument"] = instruments[0] if instruments else None
+    target["instruments"] = instruments or None
+    # drums: only when the caption says so (MidiCaps captions list drums among the instruments)
+    if find_first(caption, {"no": kw["drums"]["no"]})[0]:
+        target["drums"] = False
+    elif find_first(caption, {"yes": kw["drums"]["yes"]})[0]:
+        target["drums"] = True
     return target
 
 
@@ -69,9 +75,14 @@ def template_rows(n: int, rng: random.Random, kw: dict, templates: list[str]) ->
             if slot == "mood":
                 v = rng.choice(MOODS)
                 target["mood"], fill["mood"] = v, rng.choice(kw["mood"][v])
-            elif slot == "instrument":
-                v = rng.choice(list(INSTRUMENTS))
-                target["instrument"], fill["instrument"] = v, rng.choice(kw["instrument"][v])
+            elif slot in ("instrument", "instrument2", "instrument3"):
+                v = rng.choice([f for f in INSTRUMENTS if f not in (target["instruments"] or [])])
+                fill[slot] = rng.choice(kw["instrument"][v])
+                target["instruments"] = (target["instruments"] or []) + [v]
+                target["instrument"] = target["instruments"][0]
+            elif slot == "drums":
+                flag = rng.random() < 0.6
+                target["drums"], fill["drums"] = flag, rng.choice(kw["drums"]["yes" if flag else "no"])
             elif slot == "genre":
                 v = rng.choice(GENRES)
                 target["genre"], fill["genre"] = v, rng.choice(kw["genre"][v])

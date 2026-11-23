@@ -37,4 +37,35 @@ def field_accuracy(preds: list[Optional[MusicAttributes]], golds: list[MusicAttr
             exact += 1
     out["mean_field_accuracy"] = sum(accs) / len(accs) if accs else 0.0
     out["exact_match"] = exact / max(1, n)
+    out.update(ensemble_accuracy(preds, golds))
+    return out
+
+
+def ensemble_accuracy(preds: list[Optional[MusicAttributes]], golds: list[MusicAttributes]) -> dict[str, float]:
+    """Instrument-list F1 (order ignored) where the gold names instruments; drums accuracy where
+    the gold says yes/no, and drums hallucination where it says nothing."""
+    out: dict[str, float] = {}
+    f1s, drum_ok, drum_support, drum_halluc, drum_empty = [], 0, 0, 0, 0
+    for p, g in zip(preds, golds):
+        if g.instruments:
+            got = set(p.instruments or ([p.instrument] if p and p.instrument else [])) if p else set()
+            want = set(g.instruments)
+            hit = len(got & want)
+            prec, rec = (hit / len(got) if got else 0.0), hit / len(want)
+            f1s.append(2 * prec * rec / (prec + rec) if prec + rec else 0.0)
+        pd = p.drums if p is not None else None
+        if g.drums is None:
+            drum_empty += 1
+            drum_halluc += pd is not None
+        else:
+            drum_support += 1
+            drum_ok += pd == g.drums
+    out["instruments_support"] = len(f1s)
+    if f1s:
+        out["instruments_f1"] = sum(f1s) / len(f1s)
+    out["drums_support"] = drum_support
+    if drum_support:
+        out["drums_accuracy"] = drum_ok / drum_support
+    if drum_empty:
+        out["drums_hallucination"] = drum_halluc / drum_empty
     return out
