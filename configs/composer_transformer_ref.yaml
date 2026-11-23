@@ -1,0 +1,43 @@
+# Main composer: decoder-only Transformer (about 25M parameters).
+# Fits the 8 GB RTX 4070 laptop GPU with mixed precision.
+# Reference implementation (src/tunesmith/model/transformer_ref.py, AI-written; see ATTRIBUTION.md).
+# Same hyperparameters as configs/composer_base.yaml, which trains the student's own implementation.
+
+data_dir: data/processed/midicaps
+out_dir: models/composer/transformer-ref
+
+model:
+  type: transformer_ref
+  d_model: 512
+  n_layers: 8
+  n_heads: 8
+  d_ff: 2048
+  dropout: 0.1
+  max_seq_len: 1024
+  positional: learned      # learned | rope (optional extension)
+
+train:
+  batch_size: 24
+  length_bucketing: true   # batch similar lengths together (~3x less padding)
+  grad_accum: 2
+  lr: 3.0e-4
+  min_lr_ratio: 0.1        # cosine decays to lr * min_lr_ratio
+  weight_decay: 0.1
+  betas: [0.9, 0.95]
+  warmup_steps: 1000
+  max_steps: 40000
+  eval_every: 1000
+  eval_batches: 50
+  save_every: 2000
+  log_every: 50
+  grad_clip: 1.0
+  amp: auto                # auto | bf16 | fp16 | off
+  num_workers: 2
+  seed: 0
+  early_stop_patience: 5   # evaluations without val-loss improvement
+
+augment:
+  transpose_range: [-5, 6]  # semitones, inclusive; the KEY token is shifted too
+  transpose_prob: 0.8
+  attr_dropout: 0.15        # each control token -> NULL with this probability
+  uncond_prob: 0.1          # all control tokens -> NULL (enables classifier-free guidance)

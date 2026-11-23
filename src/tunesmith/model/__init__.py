@@ -37,6 +37,11 @@ def build_model(model_cfg: dict[str, Any], vocab_size: int) -> nn.Module:
                 "The Transformer composer is still a skeleton (src/tunesmith/model/transformer.py, "
                 f"{e}). Implement it, or train the GRU baseline with model.type: gru."
             ) from e
+    if kind == "transformer_ref":
+        from .transformer import ComposerConfig
+        from .transformer_ref import Composer as RefComposer
+
+        return RefComposer(ComposerConfig(**_pick(ComposerConfig, {**model_cfg, "vocab_size": vocab_size})))
     if kind == "gru":
         from .rnn import GRUComposer, GRUConfig
 
