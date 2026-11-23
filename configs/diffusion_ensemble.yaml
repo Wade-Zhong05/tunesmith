@@ -1,0 +1,61 @@
+# Diffusion composer: a conditional U-Net over 8-bar multi-track piano rolls
+# (src/tunesmith/diffusion/). Trained on the same prepared ensemble windows as the ensemble
+# Transformer (4/4 windows only), conditioned on the same control tokens.
+# Used by `pixi run -e cuda train-diffusion`.
+
+data_dir: data/processed/midicaps_ensemble
+out_dir: models/diffusion/ensemble-unet
+
+roll:
+  bars: 8
+  beats_per_bar: 4
+  steps_per_beat: 4         # sixteenth-note grid: 128 frames
+  n_slots: 4                # instrument slots, in the prompt's INST1..INST4 order
+  pitch_lo: 20
+  n_pitch: 96               # MIDI 20..115
+
+model:
+  base: 64
+  mults: [1, 2, 4, 4]       # 128x96 -> 64x48 -> 32x24 -> 16x12
+  n_res: 2
+  attn_levels: [3]          # self-attention at 16x12 (and in the middle block)
+  n_heads: 4
+  dropout: 0.1
+  field_dim: 64
+
+diffusion:
+  timesteps: 1000           # cosine schedule, noise prediction
+
+# RTX 4070 laptop (8 GB): about 60 rolls/s; batch 16 peaks at 4.6 GB, batch 32 does not fit.
+# 60,000 steps x 16 = 0.96M rolls (about 1.7 passes over the 4/4 windows), about 4.6 h.
+train:
+  batch_size: 16
+  grad_accum: 1
+  lr: 1.0e-4
+  min_lr_ratio: 0.1
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  warmup_steps: 1000
+  max_steps: 60000
+  ema_decay: 0.9995
+  eval_every: 2000
+  eval_batches: 32
+  max_val_items: 2048
+  save_every: 2000
+  log_every: 100
+  grad_clip: 1.0
+  amp: auto
+  num_workers: 4
+  seed: 0
+  write_samples: true       # a few MIDI files in <out_dir>/samples at every evaluation
+
+augment:
+  transpose_range: [-5, 6]  # pitched channels and the KEY token; drums stay
+  transpose_prob: 0.8
+  attr_dropout: 0.15
+  uncond_prob: 0.1          # all control tokens -> NULL (classifier-free guidance)
+
+sample:
+  steps: 50                 # DDIM steps
+  cfg_scale: 2.0
+  threshold: 0.5            # roll value above which a cell is a note

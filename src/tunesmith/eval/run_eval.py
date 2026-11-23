@@ -7,6 +7,8 @@ bias, stopping rule), so differences come from the model.
     pixi run evaluate --system bigram       # Markov-chain baseline (fitted on the training split)
     pixi run evaluate --system uniform      # random baseline
     pixi run evaluate --system data         # the real test windows: reference statistics
+    pixi run evaluate --system models/diffusion/ensemble-unet/best.pt --data-dir data/processed/midicaps_ensemble
+                                            # the diffusion composer (8 bars of 4/4; --steps, --cfg-scale)
     ... --parser rules|lm                   # end-to-end: attributes parsed from the captions
     ... --render --clap                     # also WAV files and CLAP text-audio scores
 
@@ -26,6 +28,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from symusic import Score
 
 from ..attributes import MusicAttributes
 from ..model import load_checkpoint, pick_device
@@ -38,13 +41,18 @@ from .baselines import BigramComposer, UniformComposer
 from .metrics import music_metrics, summarize
 
 
+def bigram_path(mode: str) -> str:
+    """Fitted bigram baseline per tokenizer mode (melody keeps its original file name)."""
+    return "models/baselines/bigram.npy" if mode == "melody" else f"models/baselines/bigram_{mode}.npy"
+
+
 def load_system(spec: str, data_dir: Path, device: torch.device):
     if spec in ("uniform", "bigram", "data"):
         tok = TuneTokenizer(load_json(data_dir / "meta.json")["tokenizer"])
         if spec == "uniform":
             return UniformComposer(tok.vocab_size).to(device), tok
         if spec == "bigram":
-            path = resolve("models/baselines/bigram.npy")
+            path = resolve(bigram_path(tok.mode))
             if path.exists():
                 model = BigramComposer.load(path)
             else:
@@ -53,7 +61,15 @@ def load_system(spec: str, data_dir: Path, device: torch.device):
                 model.save(path)
             return model.to(device), tok
         return None, tok
-    model, tok, _ = load_checkpoint(resolve(spec), device)
+    path = resolve(spec)
+    ckpt = torch.load(path, map_location=device, weights_only=False)
+    if ckpt.get("kind") == "diffusion":
+        from ..diffusion.composer import DiffusionComposer
+
+        composer = DiffusionComposer.from_checkpoint(ckpt, device)
+        return composer, composer.tok
+    del ckpt
+    model, tok, _ = load_checkpoint(path, device)
     return model, tok
 
 
@@ -91,7 +107,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--data-dir", default="data/processed/midicaps")
     ap.add_argument("--prompts", help="default: <data-dir>/files_test.jsonl")
     ap.add_argument("--n", type=int, default=200)
-    ap.add_argument("--bars", type=int, default=16)
+    ap.add_argument("--bars", type=int, default=None, help="default: 16 (melody), 8 (ensemble)")
     ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--parser", default="oracle", choices=["oracle", "rules", "lm"])
     ap.add_argument("--temperature", type=float, default=1.0)
@@ -100,6 +116,9 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--cfg-scale", type=float, default=1.5)
     ap.add_argument("--key-bias", type=float, default=1.0)
     ap.add_argument("--no-grammar", action="store_true")
+    ap.add_argument("--max-empty-bars", type=int, default=1,
+                    help="longest run of silent bars the grammar allows; -1 for no limit")
+    ap.add_argument("--steps", type=int, default=None, help="DDIM steps (diffusion composer)")
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--clap", action="store_true")
     ap.add_argument("--soundfont", default="models/soundfonts/MuseScore_General.sf3")
@@ -114,8 +133,12 @@ def main(argv: list[str] | None = None) -> None:
     out = resolve(args.out_root) / name
     (out / "midi").mkdir(parents=True, exist_ok=True)
     model, tok = load_system(args.system, data_dir, device)
+    if args.bars is None:
+        args.bars = 8 if tok.ensemble else 16
 
-    items: list[tuple[list[int], MusicAttributes, str]] = []
+    diffusion = type(model).__name__ == "DiffusionComposer"
+    # (token ids, or a finished Score for the diffusion composer; requested attributes; caption)
+    items: list[tuple[list[int] | Score, MusicAttributes, str]] = []
     t0 = time.time()
     if args.system == "data":
         for ids, attrs in real_windows(data_dir, tok, args.n, args.seed):
@@ -132,9 +155,16 @@ def main(argv: list[str] | None = None) -> None:
                 p["attrs"] = parsed if parsed.bars else parsed.model_copy(update={"bars": args.bars})
         for i in range(0, len(prompts), args.batch):
             chunk = prompts[i:i + args.batch]
+            if diffusion:
+                scores = model.compose([p["attrs"] for p in chunk], seed=args.seed + i, steps=args.steps,
+                                       cfg_scale=args.cfg_scale)
+                items.extend((s, p["attrs"], p["caption"]) for s, p in zip(scores, chunk))
+                print(f"  generated {len(items)}/{len(prompts)}", flush=True)
+                continue
             seqs = generate(model, tok, [p["attrs"] for p in chunk], temperature=args.temperature,
                             top_k=args.top_k, top_p=args.top_p, cfg_scale=args.cfg_scale,
-                            key_bias=args.key_bias, grammar=not args.no_grammar, seed=args.seed + i)
+                            key_bias=args.key_bias, grammar=not args.no_grammar, seed=args.seed + i,
+                            max_empty_bars=None if args.max_empty_bars < 0 else args.max_empty_bars)
             items.extend((s, p["attrs"], p["caption"]) for s, p in zip(seqs, chunk))
             print(f"  generated {len(items)}/{len(prompts)}", flush=True)
     gen_seconds = time.time() - t0
@@ -142,11 +172,12 @@ def main(argv: list[str] | None = None) -> None:
     rows, wavs, captions = [], [], []
     for i, (ids, attrs, caption) in enumerate(items):
         try:
-            score = tok.decode_for(ids, attrs)
+            score = ids if isinstance(ids, Score) else tok.decode_for(ids, attrs)
         except Exception as e:
             rows.append({"i": i, "valid": False, "error": type(e).__name__})
             continue
-        m = music_metrics(score, attrs, tok.count_bars(ids))
+        n_bars = model.spec.bars if isinstance(ids, Score) else tok.count_bars(ids)
+        m = music_metrics(score, attrs, n_bars, ensemble=tok.ensemble)
         midi_path = out / "midi" / f"{i:04d}.mid"
         score.dump_midi(str(midi_path))
         if i < 6:
@@ -156,13 +187,14 @@ def main(argv: list[str] | None = None) -> None:
             render_wav(score, wav, args.soundfont, sample_rate=48000)
             wavs.append(wav)
             captions.append(caption or attrs.summary())
-        rows.append({"i": i, **{f"req_{k}": v for k, v in attrs.model_dump().items() if k != "lyrics"},
-                     **flatten(m), "tokens": len(ids)})
+        req = {k: (",".join(v) if isinstance(v, list) else v) for k, v in attrs.model_dump().items() if k != "lyrics"}
+        rows.append({"i": i, **{f"req_{k}": v for k, v in req.items()},
+                     **flatten(m), "tokens": 0 if isinstance(ids, Score) else len(ids)})
 
     summary: dict[str, Any] = {"system": args.system, "name": name, "parser": args.parser,
                                "settings": {k: getattr(args, k) for k in ("temperature", "top_k", "top_p", "cfg_scale",
-                                                                          "key_bias", "bars", "seed")},
-                               "grammar": not args.no_grammar, **summarize(rows),
+                                                                          "key_bias", "bars", "seed", "steps")},
+                               "grammar": not args.no_grammar, "max_empty_bars": args.max_empty_bars, **summarize(rows),
                                "seconds_per_piece": gen_seconds / max(1, len(items)), "device": str(device)}
     if args.clap and wavs:
         from .clap_score import clap_scores

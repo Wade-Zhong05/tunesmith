@@ -1,0 +1,31 @@
+# Tiny diffusion composer for CPU smoke runs and tests (a few steps on any prepared ensemble data).
+
+data_dir: data/processed/midicaps_ensemble
+out_dir: models/diffusion/tiny
+
+roll: {bars: 8, beats_per_bar: 4, steps_per_beat: 4, n_slots: 4, pitch_lo: 20, n_pitch: 96}
+model: {base: 16, mults: [1, 2], n_res: 1, attn_levels: [1], n_heads: 2, dropout: 0.0, field_dim: 8}
+diffusion: {timesteps: 100}
+
+train:
+  batch_size: 4
+  grad_accum: 1
+  lr: 1.0e-3
+  min_lr_ratio: 0.1
+  warmup_steps: 2
+  max_steps: 4
+  ema_decay: 0.9
+  eval_every: 2
+  eval_batches: 1
+  max_val_items: 8
+  max_train_items: 64
+  save_every: 2
+  log_every: 1
+  grad_clip: 1.0
+  amp: off
+  num_workers: 0
+  seed: 0
+  write_samples: true
+
+augment: {transpose_range: [-2, 2], transpose_prob: 0.5, attr_dropout: 0.15, uncond_prob: 0.1}
+sample: {steps: 4, cfg_scale: 2.0, threshold: 0.5}
