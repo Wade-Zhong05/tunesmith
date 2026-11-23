@@ -47,6 +47,18 @@ python = "3.12.*"
 [tool.pixi.pypi-dependencies]
 tunesmith = { path = ".", editable = true }
 
+# SoundFont rendering (tinysoundfont, MIT). Its metadata requires pyaudio, which is only used
+# for live playback, never here: PyPI has Windows wheels, conda-forge has Linux builds, and
+# macOS falls back to the built-in numpy synthesiser.
+[tool.pixi.target.win-64.pypi-dependencies]
+tinysoundfont = ">=0.3.7"
+
+[tool.pixi.target.linux-64.dependencies]
+pyaudio = "*"
+
+[tool.pixi.target.linux-64.pypi-dependencies]
+tinysoundfont = ">=0.3.7"
+
 # CPU build of PyTorch: app, tests, graders' machines.
 [tool.pixi.feature.cpu.pypi-dependencies]
 torch = { version = ">=2.5", index = "https://download.pytorch.org/whl/cpu" }
@@ -79,6 +91,11 @@ prepare-data = "python -m tunesmith.data.prepare"
 synth-data = "python -m tunesmith.data.synthetic"
 # composer (text-free part: attributes -> melody)
 train-composer = "python -m tunesmith.train.train_composer"
+train-diffusion = "python -m tunesmith.diffusion.train"
+diffusion-sample = "python -m tunesmith.diffusion.sample"
+# ensemble (multi-instrument) mode
+prepare-ensemble = "python -m tunesmith.data.prepare --config configs/data_ensemble.yaml"
+train-ensemble = "python -m tunesmith.train.train_composer --config configs/composer_ensemble.yaml"
 # parser (text -> attributes)
 make-parser-data = "python -m tunesmith.understand.make_dataset"
 download-parser-base = "python -m tunesmith.understand.download_base"
@@ -86,8 +103,10 @@ train-parser = "python -m tunesmith.understand.train_parser"
 # evaluation, CLI, app
 evaluate = "python -m tunesmith.eval.run_eval"
 evaluate-parser = "python -m tunesmith.eval.eval_parser"
+listening = "python -m tunesmith.eval.listening"
 generate = "python -m tunesmith.cli generate"
 parse = "python -m tunesmith.cli parse"
 app = "python -m tunesmith.app.server"
+make-demo = "python -m tunesmith.app.make_demo"
 smoke = "python -m tunesmith.smoke"
 fetch-soundfont = "python -m tunesmith.render.fetch_soundfont"

@@ -24,7 +24,9 @@ environments:
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/alsa-lib-1.2.16.1-h7cc23a3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/jack-1.9.22-h99b8ecc_4.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.9.0-hd2095e1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libffi-3.7.0-h81df57d_1.conda
@@ -32,13 +34,17 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-16.2.0-he0feb66_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.3-hb03c661_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libnsl-2.0.1-hb9d3cd8_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/libopus-1.6.1-hebe6cf0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libpython-3.12.16-ha57cdbe_0_cpython.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.54.1-h0737f62_101.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-16.2.0-h934c35e_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libxcrypt-4.4.38-h280c20c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.6-hdb14827_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openssl-3.6.5-h781a0a9_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/portaudio-19.7.0-hf4617a5_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/pyaudio-0.2.14-py312h20f7ae2_4.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.12.16-h5f976f7_0_cpython.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/readline-8.3-hd6e31c0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h1df4ec4_4.conda
@@ -51,6 +57,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pluggy-1.7.0-pyh5ded981_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.21.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.2.0-pyhc364b38_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.12-9_cp312.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-84.2.1-pyhe730653_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.16.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
@@ -78,6 +86,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/56/79/12978b96bd44274fe38b5dde5cfb660b1d114f70a65ef962bcbbed99b549/nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/56/9a/fff8376f8e3d084cd1530e1ef7b879bb7d6d265620c95c1b322725c694f4/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/57/d3/9308fbf4445395ffa3d3cd4fb8c83a85f3b7aa93fa1d9ed1f003e7facdf9/tinysoundfont-0.3.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/63/a2/4bd1ffbc72292ef2c4d5c6574043ed0fa29e80346cd4e27a280c3bacfc17/miditok-3.1.0-py3-none-any.whl
@@ -122,7 +131,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e1/23/e717c5ac26d26cf39a27fbc076240fad2e3b817e5889d671b67f4f9f49c5/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e6/99/fdf65cc539e266ab93546c261bdf98411fe165c6e4e13f9dbf597097192b/pillow-13.0.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ef/90/5d0096a325aa0f83ba7a3968bfb485b67e32c947bdf9cd0fcb4b485be718/filelock-4.2.10-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f0/6e/c2cf12c9ff8b872e92b4a5740701e51ff17689c4d726fca91875b07f655d/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f5/31/ffb400c5ae99daf09687aa6c42831c5d824f71c4851363ed2a4a1ac52bab/nvidia_cuda_nvrtc_cu12-12.6.85-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl
@@ -196,9 +204,11 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a9/2d/610db864d7513158cebb8f36cc88e67e73bd6c7aa1905ef18d89e1281c81/opentelemetry_api-1.45.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ac/6a/582286ea74c54363cba30413214767904f0a239e12253c3817feaf78453f/pySmartDL-1.3.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/c2/ce417c397afa5181f0e3c6ff01a4d01639414e1adef08730d97571297151/httpcore2-2.16.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b4/90/e2159492b5426be0c1fef7acba807a03511f97c5f86b3caeda6ad92351a7/psutil-7.2.2-cp37-abi3-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/bd/8e/041e5342fda5215622dcac52efa08b3abb5b17b14f21586cb5b89dee5a3d/tinysoundfont-0.3.7-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/c1/3d/cc08d3cb257764101c71c47f18e2f547782d013928edc877f155cb99229d/typer-0.29.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/ef/e03271355a802f38f7510e31e006667fc8b95b771058d75a36e2afda61b2/regex-2026.11.9-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/d1/6c/24f074c9a0efb98e61b20aafe6b2641922d5db24e447d5d6daffd9e17555/tokenizers-0.23.3-cp310-abi3-win_amd64.whl
@@ -219,7 +229,9 @@ environments:
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/alsa-lib-1.2.16.1-h7cc23a3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/jack-1.9.22-h99b8ecc_4.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.9.0-hd2095e1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libffi-3.7.0-h81df57d_1.conda
@@ -227,13 +239,17 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-16.2.0-he0feb66_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.3-hb03c661_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libnsl-2.0.1-hb9d3cd8_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/libopus-1.6.1-hebe6cf0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libpython-3.12.16-ha57cdbe_0_cpython.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.54.1-h0737f62_101.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-16.2.0-h934c35e_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libxcrypt-4.4.38-h280c20c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.6-hdb14827_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openssl-3.6.5-h781a0a9_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/portaudio-19.7.0-hf4617a5_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/pyaudio-0.2.14-py312h20f7ae2_4.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.12.16-h5f976f7_0_cpython.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/readline-8.3-hd6e31c0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h1df4ec4_4.conda
@@ -246,6 +262,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pluggy-1.7.0-pyh5ded981_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.21.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.2.0-pyhc364b38_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.12-9_cp312.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-84.2.1-pyhe730653_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.16.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
@@ -267,6 +285,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/46/c2/59c5b6cf4b762d80de04cf60f2d0deba1da2f4172a91c41eaee8933080a8/regex-2026.11.9-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/4f/a7/aeedb5140afa41fc74c225e9184ab96723a6e873b6ee1c9fede7283456d8/markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/57/d3/9308fbf4445395ffa3d3cd4fb8c83a85f3b7aa93fa1d9ed1f003e7facdf9/tinysoundfont-0.3.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/63/a2/4bd1ffbc72292ef2c4d5c6574043ed0fa29e80346cd4e27a280c3bacfc17/miditok-3.1.0-py3-none-any.whl
@@ -300,7 +319,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/99/fdf65cc539e266ab93546c261bdf98411fe165c6e4e13f9dbf597097192b/pillow-13.0.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ef/90/5d0096a325aa0f83ba7a3968bfb485b67e32c947bdf9cd0fcb4b485be718/filelock-4.2.10-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f8/1e/1e8ecc05ef034e9a95c18ed32d2ec07905a7cd2ca611a9d88e25ee1f4850/hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/fc/f4/dadfec469313c7f428efa7e84b4aba9732f813c13ea7131a24b7b008ef57/kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
@@ -452,9 +470,11 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a9/2d/610db864d7513158cebb8f36cc88e67e73bd6c7aa1905ef18d89e1281c81/opentelemetry_api-1.45.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ac/6a/582286ea74c54363cba30413214767904f0a239e12253c3817feaf78453f/pySmartDL-1.3.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/c2/ce417c397afa5181f0e3c6ff01a4d01639414e1adef08730d97571297151/httpcore2-2.16.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b4/90/e2159492b5426be0c1fef7acba807a03511f97c5f86b3caeda6ad92351a7/psutil-7.2.2-cp37-abi3-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/bd/8e/041e5342fda5215622dcac52efa08b3abb5b17b14f21586cb5b89dee5a3d/tinysoundfont-0.3.7-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/c1/3d/cc08d3cb257764101c71c47f18e2f547782d013928edc877f155cb99229d/typer-0.29.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/ef/e03271355a802f38f7510e31e006667fc8b95b771058d75a36e2afda61b2/regex-2026.11.9-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/d1/6c/24f074c9a0efb98e61b20aafe6b2641922d5db24e447d5d6daffd9e17555/tokenizers-0.23.3-cp310-abi3-win_amd64.whl
@@ -485,6 +505,20 @@ packages:
     - _openmp_mutex >=4.5
   size: 28948
   timestamp: 1770939786096
+- conda: https://conda.anaconda.org/conda-forge/linux-64/alsa-lib-1.2.16.1-h7cc23a3_1.conda
+  sha256: a35bddac04be093769e81814465a537961c6ed0f8d3cc23d6dce6ecdfaf71821
+  md5: 7094e0d8d14de0eff6d83f0d2f1f661e
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=15
+  license: LGPL-2.1-or-later
+  license_family: LGPL
+  purls: []
+  run_exports:
+    weak:
+    - alsa-lib >=1.2.16.1,<1.3.0a0
+  size: 594986
+  timestamp: 1787763412911
 - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
   sha256: 1a0d382c515ebf55f8ee1f38c8b81bc95af5c2acc42ad53b66bc5df932032f96
   md5: e675fabcf81499adc7edf58124fb1e01
@@ -499,6 +533,23 @@ packages:
     - bzip2 >=1.0.8,<2.0a0
   size: 257808
   timestamp: 1785906269155
+- conda: https://conda.anaconda.org/conda-forge/linux-64/jack-1.9.22-h99b8ecc_4.conda
+  sha256: 6267e6447e89886f46a4fc1405abc01db1d9b5eec883e0c73499207f054908b4
+  md5: 4fa050757208afc20bf3f14ad4ad9164
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - alsa-lib >=1.2.16.1,<1.3.0a0
+  - libgcc >=15
+  - libopus >=1.6.1,<2.0a0
+  - libstdcxx >=15
+  license: LGPL-2.0-only
+  license_family: LGPL
+  purls: []
+  run_exports:
+    weak:
+    - jack >=1.9.22,<1.10.0a0
+  size: 464378
+  timestamp: 1790100889511
 - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
   sha256: 901649b1edbe841fd4ee7e2d491a05184ed540eb01cdae506872f344babc1d28
   md5: 2362c70e7e79827c32db35547d9c179b
@@ -598,6 +649,20 @@ packages:
     - libnsl >=2.0.1,<2.1.0a0
   size: 33731
   timestamp: 1750274110928
+- conda: https://conda.anaconda.org/conda-forge/linux-64/libopus-1.6.1-hebe6cf0_1.conda
+  sha256: 82873b6c8478e19ab7aef0828ad3619b6633ad185a90a52f39dcb2c30c0c075e
+  md5: 8a1d977c3d77666406a40c0ab648ff52
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=15
+  license: BSD-3-Clause
+  license_family: BSD
+  purls: []
+  run_exports:
+    weak:
+    - libopus >=1.6.1,<2.0a0
+  size: 330213
+  timestamp: 1787247513612
 - conda: https://conda.anaconda.org/conda-forge/linux-64/libpython-3.12.16-ha57cdbe_0_cpython.conda
   sha256: 71126cad347dfd1be645b1207baa3729e64f055edb5f785dadeb84872480a015
   md5: e1442492859319edcd76293a2488156e
@@ -627,6 +692,20 @@ packages:
     - libsqlite >=3.54.1,<4.0a0
   size: 980491
   timestamp: 1793051548007
+- conda: https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-16.2.0-h934c35e_7.conda
+  sha256: fa7018298629fc429971fffd6ecba3d27a7b02e4e890d6a93ea01ffebe8cb745
+  md5: 9b6707e0caca917fa6ea9ee473f37a5d
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc 16.2.0 ha9f2e26_7
+  constrains:
+  - libstdcxx-ng ==16.2.0=*_7
+  license: GPL-3.0-only WITH GCC-exception-3.1
+  license_family: GPL
+  purls: []
+  run_exports: {}
+  size: 6615436
+  timestamp: 1790303132935
 - conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_1.conda
   sha256: 0e2e8f2daa9306e67f046e31092d637431d8cf0a26c407ab22401d108c2d4631
   md5: d852293faea3c04a6e896b908b43aded
@@ -697,6 +776,40 @@ packages:
     - openssl >=3.6.5,<4.0a0
   size: 3195299
   timestamp: 1791098052301
+- conda: https://conda.anaconda.org/conda-forge/linux-64/portaudio-19.7.0-hf4617a5_0.conda
+  sha256: 3259d2bf63d0c889c516511c8fa73214791ca30baeeee0962eee8b97d17cd1c6
+  md5: 053455c094c711e9aa77cf5023cf2bc3
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - alsa-lib >=1.2.12,<1.3.0a0
+  - libgcc >=13
+  - libstdcxx >=13
+  license: MIT
+  license_family: MIT
+  purls: []
+  run_exports:
+    weak:
+    - portaudio >=19.7.0,<19.8.0a0
+  size: 77342
+  timestamp: 1730364040048
+- conda: https://conda.anaconda.org/conda-forge/linux-64/pyaudio-0.2.14-py312h20f7ae2_4.conda
+  sha256: 47c29064ee6c2e6ff7f77b87a1017d115351ad1255dcc7ab1cc04cf1312f4796
+  md5: 751b311b38b7ef24389d670f65fb6d9f
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - jack >=1.9.22,<1.10.0a0
+  - libgcc >=15
+  - portaudio >=19.7.0,<19.8.0a0
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - setuptools
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/pyaudio?source=hash-mapping
+  run_exports: {}
+  size: 39127
+  timestamp: 1788802668083
 - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.12.16-h5f976f7_0_cpython.conda
   sha256: a40188b47c3995bc42a33820be4d780af5c11cc295409413fb925549f0abfe92
   md5: bef9f5422e5246840497b4ae3d968001
@@ -893,6 +1006,30 @@ packages:
   run_exports: {}
   size: 326683
   timestamp: 1793214631903
+- conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.12-9_cp312.conda
+  build_number: 9
+  sha256: ee9c2922e07afc85fc82d5fa82c9ac2c79da3be3283a5e17bf2f2ae38dbd02fb
+  md5: 4c32076993e6270825441d059ab5c18b
+  constrains:
+  - python 3.12.* *_cpython
+  license: BSD-3-Clause
+  license_family: BSD
+  purls: []
+  run_exports: {}
+  size: 6751
+  timestamp: 1788302823694
+- conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-84.2.1-pyhe730653_0.conda
+  sha256: 17add609d1a31c874e39a03935072be59bcafb06d42383eceabea746d12e6025
+  md5: d41f95b8f1553165b2cc2f37162dac9c
+  depends:
+  - python >=3.11
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/setuptools?source=compressed-mapping
+  run_exports: {}
+  size: 567436
+  timestamp: 1792571495729
 - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
   sha256: 93b6f517fb7adff00b62be02b798d384a1b34d0e368fdb576fb248bcb3bb9ec7
   md5: 36d6a162326c52d6339c8b606f43932d
@@ -1866,6 +2003,16 @@ packages:
   version: 12.6.77
   sha256: b90bed3df379fa79afbd21be8e04a0314336b8ae16768b58f2d34cb1d04cd7d2
   requires_python: '>=3'
+- pypi: https://files.pythonhosted.org/packages/57/d3/9308fbf4445395ffa3d3cd4fb8c83a85f3b7aa93fa1d9ed1f003e7facdf9/tinysoundfont-0.3.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: tinysoundfont
+  version: 0.3.7
+  sha256: c48a614fbc0287f16ad4bef857c79e80ba9e413474fbe47f460d2dd1ec449d4b
+  requires_dist:
+  - pyaudio
+  - pytest ; extra == 'test'
+  - numpy ; extra == 'test'
+  - scipy ; extra == 'test'
+  requires_python: '>=3.7'
 - pypi: https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl
   name: idna
   version: '3.20'
@@ -2564,6 +2711,12 @@ packages:
   version: 12.6.4.1
   sha256: 08ed2686e9875d01b58e3cb379c6896df8e76c75e0d4a7f7dace3d7b6d9ef8eb
   requires_python: '>=3'
+- pypi: https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl
+  name: pyaudio
+  version: 0.2.14
+  sha256: 12f2f1ba04e06ff95d80700a78967897a489c05e093e3bffa05a84ed9c0a7fa3
+  requires_dist:
+  - numpy ; extra == 'test'
 - pypi: https://files.pythonhosted.org/packages/b2/66/cc9876340ac68ae71b15c743ddb13f8b30d5244af344ec8322b449e35426/nvidia_cufile_cu12-1.11.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
   name: nvidia-cufile-cu12
   version: 1.11.1.6
@@ -2741,6 +2894,16 @@ packages:
   requires_dist:
   - nvidia-cublas-cu12
   requires_python: '>=3'
+- pypi: https://files.pythonhosted.org/packages/bd/8e/041e5342fda5215622dcac52efa08b3abb5b17b14f21586cb5b89dee5a3d/tinysoundfont-0.3.7-cp312-cp312-win_amd64.whl
+  name: tinysoundfont
+  version: 0.3.7
+  sha256: 402269dc9da85d722697a96254dbd64d57fe083f16e56b662d8ed897f53a1aa0
+  requires_dist:
+  - pyaudio
+  - pytest ; extra == 'test'
+  - numpy ; extra == 'test'
+  - scipy ; extra == 'test'
+  requires_python: '>=3.7'
 - pypi: https://files.pythonhosted.org/packages/c1/09/b7012e5bfae67640f268aa584caa80fe1674f6b0da949046b679972c33e3/triton-3.8.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
   name: triton
   version: 3.8.0

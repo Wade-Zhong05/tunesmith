@@ -3,81 +3,107 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>tunesmith · describe a melody, hear it</title>
+  <title>tunesmith</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="masthead">
-    <div class="staff" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-    <h1>tunesmith</h1>
-    <p class="tagline">Describe a melody in words. Hear it, see it, keep the MIDI.</p>
+  <header class="bar">
+    <span class="mark">tunesmith</span>
+    <div class="modes" role="radiogroup" aria-label="What to compose">
+      <label class="mode"><input type="radio" name="mode" value="melody" checked>Melody</label>
+      <label class="mode"><input type="radio" name="mode" value="ensemble">Band</label>
+      <label class="mode is-off" title="Planned after the instrumental modes"><input type="radio" name="mode" value="lyrics" disabled>Lyrics <small>later</small></label>
+      <span class="mode-line" aria-hidden="true"></span>
+    </div>
   </header>
 
   <main>
-    <section class="compose card">
-      <label for="text" class="label">Describe the music</label>
-      <textarea id="text" maxlength="500" rows="3"
-        placeholder="a gentle piano waltz in A minor, slow and a little sad"></textarea>
-      <div class="examples" id="examples" aria-label="examples"></div>
+    <section class="hero">
+      <h1 class="title" aria-label="tunesmith">
+        <span class="staff" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="letters" aria-hidden="true"></span>
+        <span class="sweep" aria-hidden="true"></span>
+      </h1>
+      <p class="lede">Type what you want to hear. tunesmith writes it as a melody or for a small band, plays it back, and hands you the MIDI file.</p>
 
-      <div class="mode" role="radiogroup" aria-label="mode">
-        <label class="pill"><input type="radio" name="mode" value="instrumental" checked> Instrumental</label>
-        <label class="pill disabled" title="coming after the instrumental version">
-          <input type="radio" name="mode" value="lyrics" disabled> With lyrics <em>soon</em></label>
+      <div class="ask">
+        <label for="text" class="visually-hidden">Describe the music</label>
+        <textarea id="text" rows="2" maxlength="500"></textarea>
+        <button id="go" class="go" type="button">Compose</button>
       </div>
+      <p class="tries" id="tries"></p>
 
-      <details class="advanced">
-        <summary>Adjust</summary>
-        <p class="hint">"Auto" keeps what was understood from your text; anything you pick here overrides it.</p>
-        <div class="grid" id="overrides"></div>
-        <div class="grid sliders">
-          <label>Temperature <output id="temperature-v">1.0</output>
-            <input id="temperature" type="range" min="0.5" max="1.5" step="0.05" value="1.0"></label>
-          <label>Top-p <output id="top_p-v">0.95</output>
-            <input id="top_p" type="range" min="0.5" max="1" step="0.01" value="0.95"></label>
-          <label>Guidance <output id="cfg_scale-v">1.5</output>
-            <input id="cfg_scale" type="range" min="1" max="3" step="0.1" value="1.5"></label>
-          <label>Stay in key <output id="key_bias-v">1.0</output>
-            <input id="key_bias" type="range" min="0" max="4" step="0.25" value="1.0"></label>
-          <label>Versions <input id="n" type="number" min="1" max="4" value="2"></label>
-          <label>Seed <input id="seed" type="number" min="0" placeholder="random"></label>
+      <div id="ensemble-controls" class="band" hidden>
+        <div class="band-row">
+          <span class="band-label">Instruments</span>
+          <span id="inst-count" class="note">Leave empty to take them from your description. Up to four; the first one leads.</span>
         </div>
-      </details>
-
-      <div class="actions">
-        <button id="go" class="primary">Compose</button>
-        <span id="status" role="status"></span>
+        <div id="instrument-chips" class="instruments"></div>
+        <div class="band-row">
+          <span class="band-label">Drums</span>
+          <div class="switch" role="radiogroup" aria-label="Drums">
+            <label><input type="radio" name="drums" value="" checked>As described</label>
+            <label><input type="radio" name="drums" value="yes">With drums</label>
+            <label><input type="radio" name="drums" value="no">No drums</label>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="result" class="result" hidden>
-      <div class="understood">
-        <span class="label">Understood as</span>
-        <div id="attrs" class="chips"></div>
+    <section class="player" aria-label="Player">
+      <div class="player-top">
+        <div class="tabs" id="tabs" role="tablist" aria-label="Versions"></div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
       </div>
-      <div id="pieces"></div>
-      <p id="meta" class="meta"></p>
+      <div class="stage">
+        <canvas id="roll" aria-label="Piano roll of the current piece"></canvas>
+        <p id="caption" class="caption"></p>
+      </div>
+      <div class="controls">
+        <button id="play" class="play" type="button" aria-label="Play">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-play" d="M8 5.5v13l11-6.5z"/><path class="i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>
+        </button>
+        <span id="time" class="time">0:00</span>
+        <div id="scrub" class="scrub" role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="scrub-fill"></div><div class="scrub-knob"></div>
+        </div>
+        <span id="dur" class="time">0:00</span>
+        <a id="download" class="download" download>Download MIDI</a>
+      </div>
+      <div id="legend" class="legend"></div>
+      <p id="summary" class="summary"></p>
+      <dl id="understood" class="understood"></dl>
     </section>
+
+    <details class="settings">
+      <summary>More control</summary>
+      <p class="note">Anything you set here replaces what tunesmith read from your description.</p>
+      <div class="settings-grid">
+        <div class="overrides" id="overrides"></div>
+        <div class="faders">
+          <label class="fader"><span>Randomness</span> <output id="temperature-v">1.0</output>
+            <input id="temperature" type="range" min="0.5" max="1.5" step="0.05" value="1.0"></label>
+          <label class="fader"><span>Note pool (top-p)</span> <output id="top_p-v">1.0</output>
+            <input id="top_p" type="range" min="0.5" max="1" step="0.01" value="1.0"></label>
+          <label class="fader"><span>Follow the description</span> <output id="cfg_scale-v">1.5</output>
+            <input id="cfg_scale" type="range" min="1" max="3" step="0.1" value="1.5"></label>
+          <label class="fader"><span>Stay in key</span> <output id="key_bias-v">1.0</output>
+            <input id="key_bias" type="range" min="0" max="4" step="0.25" value="1.0"></label>
+          <div class="pair">
+            <label>Versions <input id="n" type="number" min="1" max="4" value="2"></label>
+            <label>Seed <input id="seed" type="number" min="0" placeholder="random"></label>
+          </div>
+        </div>
+      </div>
+    </details>
   </main>
 
-  <footer>
-    <p id="model-status" class="model-status"></p>
-    <p class="small">CS372 final project · melodies generated by a model trained on MidiCaps (CC BY-SA 4.0) · audio is a preview rendering of the MIDI.</p>
+  <footer class="foot">
+    <p id="model-status"></p>
+    <p>A CS372 final project. The models were trained on MidiCaps (CC BY-SA 4.0). The audio is a quick SoundFont rendering of the MIDI file.</p>
   </footer>
 
-  <template id="piece-tpl">
-    <article class="piece card">
-      <div class="roll-wrap"><canvas class="roll"></canvas></div>
-      <div class="piece-bar">
-        <button class="play" aria-label="play">▶</button>
-        <span class="time">0:00</span>
-        <span class="stats"></span>
-        <a class="download" download>MIDI ↓</a>
-      </div>
-      <audio preload="auto"></audio>
-    </article>
-  </template>
-
+  <audio id="audio" preload="auto"></audio>
   <script src="app.js"></script>
 </body>
 </html>
