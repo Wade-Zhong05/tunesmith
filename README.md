@@ -52,11 +52,21 @@ Requirements: [pixi](https://pixi.sh). For training, an NVIDIA GPU. Full instruc
 [SETUP.md](SETUP.md).
 
 ```bash
-pixi install           # CPU environment from pixi.lock (Python 3.12, PyTorch, miditok, FastAPI ...)
-pixi run test          # unit tests
-pixi run smoke         # one-minute end-to-end check on synthetic data
-pixi run app           # web app on http://127.0.0.1:8000
+pixi install                    # CPU environment from pixi.lock
+pixi run download-models --all   # trained composers, LoRA adapter, Qwen base and SoundFont
+pixi run app                    # http://127.0.0.1:8000
 ```
+
+On a GPU machine, use `pixi run -e cuda app` after installing the CUDA environment.
+The [models-v1 release](https://github.com/Wade-Zhong05/tunesmith/releases/tag/models-v1)
+supplies the melody and band models. Downloads are checked against the SHA-256 hashes
+in `configs/model_release.yaml`. Repeat the command to skip verified files. Run
+`pixi run test` for unit tests or `pixi run smoke` for a small synthetic training run.
+
+Composer weights and derived baselines are released under CC BY-SA 4.0 with attribution
+to MidiCaps (Melechovsky, Roy and Herremans, ISMIR 2024). The LoRA adapter is fine-tuned
+from Qwen2.5-0.5B-Instruct (Apache-2.0) on data derived from MidiCaps (CC BY-SA 4.0).
+See [models/README.md](models/README.md) for paths and download options.
 
 From the command line:
 

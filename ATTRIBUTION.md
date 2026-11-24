@@ -13,6 +13,7 @@ beforehand. Every AI-generated file says so in its module docstring.
 
 Repository preparation on 2026-11-10 was assisted by OpenAI Codex, which updated
 `.gitignore`, checked the publication file list, and ran the existing test suite.
+Release packaging and the trained-model download script were done by OpenAI Codex on 2026-11-23.
 OpenAI Codex also launched the GRU baseline training run
 (`models/composer/gru-base`, 2026-11-10/11).
 

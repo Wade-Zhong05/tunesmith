@@ -22,13 +22,42 @@ No pixi available (Kaggle, Colab, a plain virtualenv)? Install a matching PyTorc
 then `pip install -r requirements.txt`, and run the same modules with
 `python -m tunesmith.<module>` (the pixi tasks in `pyproject.toml` list them).
 
-## 2. Check that everything works
+## 2. Download the trained models and check installation
+
+The [models-v1 release](https://github.com/Wade-Zhong05/tunesmith/releases/tag/models-v1)
+provides the trained melody and ensemble composers, GRU baseline, bigrams and LoRA
+adapter. Install them before opening the app in a fresh clone.
+
+```bash
+pixi run download-models --all
+```
+
+Without flags, `download-models` downloads the composers, bigrams and LoRA adapter.
+`--with-parser-base` additionally calls the existing Qwen base-model download, and
+`--with-soundfont` calls the SoundFont download. `--all` enables both. Those two assets
+come from their original sources. `--with-training-runs` also extracts the optional
+configuration files, training logs and curves to `models/training-runs/`.
+
+The manifest in `configs/model_release.yaml` is JSON-compatible YAML, read by the
+standard-library downloader. Every downloaded file and extracted archive member is
+checked for size and SHA-256. Verified existing files are skipped. A mismatch exits
+with an error. Remove or move the named mismatched file before retrying. Archive
+downloads are cached under `models/.downloads/`. Use `--base-url` for a mirror, such as
+`pixi run download-models --base-url file:///path/to/models-v1/`.
 
 ```bash
 pixi run test      # unit tests (the student TODO tests show as "skipped" until implemented)
 pixi run smoke     # synthetic data -> tiny GRU composer -> MIDI + WAV, about one minute on CPU
-pixi run app       # http://127.0.0.1:8000 (random baseline until a composer is trained)
+pixi run app       # http://127.0.0.1:8000 with the released models
 ```
+
+Use `pixi run -e cuda app` for GPU inference. The app shows a notice above the prompt
+when the selected composer has no trained checkpoint. Restart the app after installing
+the models. The default melody checkpoint is the released reference Transformer. To use
+your own Transformer, set `composer_checkpoint` to `models/composer/transformer-base/best.pt`
+in `configs/app.yaml`. To train from scratch, follow the data, composer and parser sections below
+instead of downloading release weights. The release contains inference checkpoints;
+it contains no optimizer state for resuming someone else's training run.
 
 ## 3. Data
 
