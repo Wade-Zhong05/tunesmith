@@ -24,9 +24,9 @@ data/raw/
 data/processed/
 data/parser/
 
-# Model weights, base models, soundfonts (see models/README.md)
+# Model weights, base models, soundfonts (pixi run download-models)
 models/*
-!models/README.md
+!models/.gitkeep
 
 # Run outputs: generated MIDI/WAV, evaluation folders, smoke tests, app logs
 outputs/
