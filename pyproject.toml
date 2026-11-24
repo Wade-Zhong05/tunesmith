@@ -86,6 +86,7 @@ HF_HUB_DISABLE_TELEMETRY = "1"
 test = "pytest -q -m \"not slow\""
 test-all = "pytest -q"
 # data
+download-models = "python -m tunesmith.download_models"
 download-data = "python -m tunesmith.data.download"
 prepare-data = "python -m tunesmith.data.prepare"
 synth-data = "python -m tunesmith.data.synthetic"

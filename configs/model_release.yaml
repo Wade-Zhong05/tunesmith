@@ -1,0 +1,139 @@
+{
+  "tag": "models-v1",
+  "base_url": "https://github.com/Wade-Zhong05/tunesmith/releases/download/models-v1/",
+  "assets": [
+    {
+      "file": "transformer-ref.pt",
+      "sha256": "801e1fefa1a26766e3bb12586754498c5c4ca8c91d7b9b8095a413eb46198bfc",
+      "size": 103869049,
+      "target": "models/composer/transformer-ref/best.pt"
+    },
+    {
+      "file": "ensemble-ref.pt",
+      "sha256": "d840386737300b3f36ec8854534571208440a190320092f113478957e20c6efb",
+      "size": 106136249,
+      "target": "models/composer/ensemble-ref/best.pt"
+    },
+    {
+      "file": "gru-base.pt",
+      "sha256": "d5b7ccb4bdb8266d527fd73ee259069ac411bc719617edb89853f5568b6ea870",
+      "size": 97587391,
+      "target": "models/composer/gru-base/best.pt"
+    },
+    {
+      "file": "bigram.npy",
+      "sha256": "44f498b12ab72268dd6c60d0715a10e64c9b287124b9f108ae2b7a96cdc99a36",
+      "size": 709092,
+      "target": "models/baselines/bigram.npy"
+    },
+    {
+      "file": "bigram_ensemble.npy",
+      "sha256": "2bb17df8705c0c29c297f9046dbed9068ac32f176cbd8673b207510b7225b878",
+      "size": 1016192,
+      "target": "models/baselines/bigram_ensemble.npy"
+    },
+    {
+      "file": "lora-r16-v2.zip",
+      "sha256": "f625ddbd7f7b0a3fccf387869ea1e5d501f92b24654bc8782fc5b263d1ecdc66",
+      "size": 34786775,
+      "target": "models/parser/lora-r16-v2",
+      "extract": true,
+      "members": {
+        "adapter_config.json": {
+          "sha256": "161c4212e5df4007dd573af3b802d8eec9eabc6f3f0da2e38792f65aa058f786",
+          "size": 1319
+        },
+        "adapter_model.safetensors": {
+          "sha256": "8181643e2a256ca68f233cb742839d76ffbe99f1e77164203b4abbc108f74b65",
+          "size": 35237104
+        },
+        "best_metrics.json": {
+          "sha256": "b3873bfd9d3f610ff3794e8209e78d800333e421d4c7cb0bb0d4efd135e5e457",
+          "size": 901
+        },
+        "chat_template.jinja": {
+          "sha256": "8aa40ce145adb73cb3a75194dc0224702a95850ec5275cabb728496bbd749fc6",
+          "size": 2561
+        },
+        "log.csv": {
+          "sha256": "49839991879f895037e03babc510a40c6bf8a7ca15be6b4bcacb99fe6beb3941",
+          "size": 5885
+        },
+        "README.md": {
+          "sha256": "e95163dbd3b9a7bb3bfac676dc19e0e403162811c1eae5be0aff74184d0e04f9",
+          "size": 5356
+        },
+        "summary.json": {
+          "sha256": "e73e80514c062d35a4180b71f0ef0a2c7aabd413b714fbbd5f31a2c7e167ee31",
+          "size": 136
+        },
+        "tokenizer.json": {
+          "sha256": "f7f96da3a872b5e901575b2067c744ad336c3a3d77a21584d20024557b1bd7f0",
+          "size": 11422059
+        },
+        "tokenizer_config.json": {
+          "sha256": "1f18fb516a5b9ec1286b09ef8df6cbe736ad8298c77d99953d85f182572b273e",
+          "size": 723
+        }
+      }
+    },
+    {
+      "file": "training-runs.zip",
+      "sha256": "9f0e4c3f1edb260a993e9551de6e1b21c8167696b1cb3452934cd006745bdf81",
+      "size": 166275,
+      "target": "models/training-runs",
+      "extract": true,
+      "optional": true,
+      "members": {
+        "composer/ensemble-ref/config.yaml": {
+          "sha256": "4cfc9d2fc8514cd961184bf335678e77531091c651bc68a502b5ade798206663",
+          "size": 724
+        },
+        "composer/ensemble-ref/curves.png": {
+          "sha256": "ff66fe10ef0c89bf4260a3441a37cd5faf5bf9d0b9762a3a3d07cb5b2170b558",
+          "size": 43595
+        },
+        "composer/ensemble-ref/log.csv": {
+          "sha256": "a720dc360811c8a115f14bf79b64224459d62d767baee94de4084d378a3ffa2c",
+          "size": 33823
+        },
+        "composer/gru-base/config.yaml": {
+          "sha256": "b9399bda89159a4f8d8742d6b8c2bfcc5196965e0af9fd90d31164ca14f41a68",
+          "size": 622
+        },
+        "composer/gru-base/curves.png": {
+          "sha256": "fdaf21573d33b543d6bb15bea969fa5b8da705fd670ef8d56e5507c4a8a8c4a7",
+          "size": 40326
+        },
+        "composer/gru-base/log.csv": {
+          "sha256": "6ea6a2f87918d673eacd142081ec5bc67e7788561c00437d93067688a0501859",
+          "size": 33856
+        },
+        "composer/transformer-ref/config.yaml": {
+          "sha256": "f9788c81272189d04ba3f93e277d26b8f7c6857e7f4fbb1920a8a47a2adde506",
+          "size": 718
+        },
+        "composer/transformer-ref/curves.png": {
+          "sha256": "9cd1510da4892f75e62055100530d14f31afba5e12bfc699e392a6db36613721",
+          "size": 43665
+        },
+        "composer/transformer-ref/log.csv": {
+          "sha256": "59b3fa037316edd3e3179b5cb4c28fbd582b8fc0938a8dae2c3e164617ac4582",
+          "size": 34064
+        },
+        "parser/lora-r16-v2/best_metrics.json": {
+          "sha256": "b3873bfd9d3f610ff3794e8209e78d800333e421d4c7cb0bb0d4efd135e5e457",
+          "size": 901
+        },
+        "parser/lora-r16-v2/log.csv": {
+          "sha256": "49839991879f895037e03babc510a40c6bf8a7ca15be6b4bcacb99fe6beb3941",
+          "size": 5885
+        },
+        "parser/lora-r16-v2/summary.json": {
+          "sha256": "e73e80514c062d35a4180b71f0ef0a2c7aabd413b714fbbd5f31a2c7e167ee31",
+          "size": 136
+        }
+      }
+    }
+  ]
+}

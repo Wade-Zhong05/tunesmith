@@ -30,3 +30,6 @@ models/*
 
 # Run outputs: generated MIDI/WAV, evaluation folders, smoke tests, app logs
 outputs/
+
+# Local GitHub Release assets
+release/
