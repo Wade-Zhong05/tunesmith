@@ -181,6 +181,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 
 .foot { padding-top: 26px; padding-bottom: 40px; color: var(--soft); font-size: 14px; }
 .foot p { margin: 4px 0; max-width: 60em; }
+.foot a { color: var(--orange-deep); text-underline-offset: 3px; }
 
 @media (max-width: 760px) {
   main, .bar, .foot { padding-left: 18px; padding-right: 18px; }

@@ -30,19 +30,43 @@ SETTINGS = {
 }
 
 PAGE = """<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>tunesmith listening test ({mode})</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tunesmith listening test ({mode})</title>
 <style>
-body {{ font: 16px/1.5 system-ui, sans-serif; max-width: 980px; margin: 30px auto; padding: 0 16px; color: #1e2427; background: #e2e3de; }}
-h1 {{ font-size: 28px; margin: 0 0 6px; }} .row {{ background: #fbfbf9; border: 1px solid #b9bcb5; border-radius: 12px; padding: 14px 16px; margin: 14px 0; }}
-.prompt {{ color: #586266; font-size: 14px; margin: 0 0 10px; }} .clips {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }}
-.clip p {{ margin: 0 0 4px; font-weight: 600; }} .answer {{ display: none; color: #586266; font-weight: 400; }}
-body.revealed .answer {{ display: inline; }} audio {{ width: 100%; }} button {{ font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid #9a9f99; background: #eeebe0; cursor: pointer; }}
+@font-face {{ font-family: "Instrument Sans"; src: url("/fonts/InstrumentSans-Variable.ttf") format("truetype"); font-weight: 400 700; }}
+body {{ font: 16px/1.55 "Instrument Sans", system-ui, sans-serif; max-width: 980px; margin: 36px auto; padding: 0 20px;
+        color: #1d1d1b; background: #fff; }}
+a {{ color: #e55408; }}
+h1 {{ font-size: 32px; letter-spacing: -0.02em; margin: 0 0 6px; }}
+.lede {{ color: #6e6d68; max-width: 70ch; }}
+.warn {{ display: none; background: #fff0e6; border-radius: 12px; padding: 12px 16px; margin: 16px 0; }}
+.warn.on {{ display: block; }}
+.row {{ border-top: 1px solid #e6e5e0; padding: 18px 0; }}
+.prompt {{ color: #6e6d68; font-size: 14px; margin: 0 0 10px; }}
+.clips {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }}
+.clip p {{ margin: 0 0 4px; font-weight: 600; }}
+.answer {{ display: none; color: #e55408; font-weight: 500; }}
+body.revealed .answer {{ display: inline; }}
+audio {{ width: 100%; }}
+button {{ font: 600 15px "Instrument Sans", system-ui, sans-serif; padding: 10px 16px; border-radius: 999px; border: 0;
+          background: #ff6b1a; color: #fff; cursor: pointer; }}
+button:hover {{ background: #e55408; }}
 </style></head><body>
-<h1>Listening test: {mode} mode</h1>
-<p>Each row has three clips for the same request: one real excerpt from the test set and two generated
-pieces. They are shuffled. Listen, decide which you prefer, then reveal the answers.</p>
+<p><a href="/">Back to tunesmith</a></p>
+<h1>Listening test: {mode_label}</h1>
+<p class="lede">Each row has three clips for the same request: one real excerpt from the test set and two generated
+pieces, in random order, all played through the same synthesiser. Listen, decide which you prefer, then reveal
+which is which.</p>
+<p class="warn" id="warn">The clips cannot be loaded when this file is opened straight from disk. Start the app with
+<code>pixi run app</code> and open <code>http://127.0.0.1:8000/files/listening/{mode}/index.html</code>
+(or use the link at the bottom of the tunesmith page).</p>
 <button onclick="document.body.classList.toggle('revealed')">Show or hide which clip is which</button>
 {rows}
+<script>
+  const warn = document.getElementById("warn");
+  if (location.protocol === "file:") warn.classList.add("on");
+  document.querySelectorAll("audio").forEach((a) => a.addEventListener("error", () => warn.classList.add("on")));
+</script>
 </body></html>
 """
 
@@ -83,11 +107,13 @@ def main(argv: list[str] | None = None) -> None:
             wav = out / f"{i:02d}_{j}.wav"
             render_wav(tok.decode_for(seq, a), wav, soundfont)
             cells.append(f'<div class="clip"><p>Clip {"ABC"[j]} <span class="answer">: {html.escape(label)}</span></p>'
-                         f'<audio controls preload="none" src="{wav.name}"></audio></div>')
+                         f'<audio controls preload="metadata" src="{wav.name}"></audio></div>')
             answers.append({"row": i, "clip": "ABC"[j], "source": name})
         rows.append(f'<div class="row"><p class="prompt">{html.escape(a.summary())}</p>'
                     f'<div class="clips">{"".join(cells)}</div></div>')
-    (out / "index.html").write_text(PAGE.format(mode=args.mode, rows="\n".join(rows)), encoding="utf-8")
+    label = "band" if args.mode == "ensemble" else "melody"
+    (out / "index.html").write_text(PAGE.format(mode=args.mode, mode_label=label, rows="\n".join(rows)),
+                                    encoding="utf-8")
     (out / "answers.json").write_text(json.dumps(answers, indent=1), encoding="utf-8")
     print(f"wrote {out / 'index.html'}  (open http://127.0.0.1:8000/files/listening/{args.mode}/index.html with `pixi run app`)")
 
