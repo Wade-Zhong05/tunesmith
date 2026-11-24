@@ -6,9 +6,9 @@ parser_base: models/parser/base/Qwen2.5-0.5B-Instruct
 parser_adapter: models/parser/lora-r16-v2   # ignored if the folder does not exist
 parser_mode: lora             # zero | few | lora (lora falls back to few if no adapter)
 
-composer_checkpoint: models/composer/transformer-base/best.pt
+composer_checkpoint: models/composer/transformer-ref/best.pt   # shipped in the models-v1 release
 fallback_checkpoint:          # tried in order when composer_checkpoint is missing
-  - models/composer/transformer-ref/best.pt
+  - models/composer/transformer-base/best.pt
   - models/composer/gru-base/best.pt
 ensemble_checkpoint: models/composer/ensemble-ref/best.pt   # multi-instrument composer
 ensemble_fallback:

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>tunesmith</title>
-  <link rel="stylesheet" href="style.css?v=2026112302">
+  <link rel="stylesheet" href="style.css?v=2026112303">
 </head>
 <body>
   <header class="bar">
@@ -25,6 +25,8 @@
         <span class="sweep" aria-hidden="true"></span>
       </h1>
       <p class="lede">Type what you want to hear. tunesmith writes it as a melody or for a small band, plays it back, and hands you the MIDI file.</p>
+
+      <p id="model-notice" class="model-notice" role="status" hidden>No trained model was found, so you are hearing a random baseline. Run <code>pixi run download-models</code> and restart the app.</p>
 
       <div class="ask">
         <label for="text" class="visually-hidden">Describe the music</label>
@@ -106,6 +108,6 @@
   </footer>
 
   <audio id="audio" preload="auto"></audio>
-  <script src="app.js?v=2026112302"></script>
+  <script src="app.js?v=2026112303"></script>
 </body>
 </html>

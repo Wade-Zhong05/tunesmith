@@ -40,6 +40,7 @@ const mode = () => document.querySelector("input[name=mode]:checked").value;
 
 const state = {
   maxInstruments: 4, instruments: [],
+  modelHealth: null,
   pieces: [], current: 0, mode: "melody", hidden: new Set(),
   preview: false, previewStart: 0, raf: null,
 };
@@ -163,6 +164,7 @@ function applyMode() {
   $("#text").placeholder = EXAMPLES[mode()][0];
   showTries();
   moveModeLine();
+  showModelNotice();
 }
 
 // ---------------------------------------------------------------- colours and text
@@ -449,7 +451,16 @@ async function compose() {
   }
 }
 
+function showModelNotice() {
+  const health = state.modelHealth;
+  const trained = mode() === "ensemble"
+    ? health?.composers?.ensemble?.trained : health?.trained;
+  $("#model-notice").hidden = !health || Boolean(trained);
+}
+
 function showModelStatus(h) {
+  state.modelHealth = h;
+  showModelNotice();
   const ens = h.composers && h.composers.ensemble;
   const melody = h.trained ? "trained" : "not trained yet (a baseline answers instead)";
   const band = ens ? (ens.trained ? "trained" : "not trained yet (a baseline answers instead)") : "unavailable";
