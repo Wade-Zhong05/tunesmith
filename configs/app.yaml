@@ -1,6 +1,7 @@
 # Web app and CLI settings (`pixi run app`, `pixi run generate`).
 
-parser: rules                 # rules | lm (needs parser_base, optionally parser_adapter)
+parser: lm                    # lm: Qwen2.5-0.5B + LoRA (README, parser results); rules: keyword baseline.
+                              # Falls back to rules if the model cannot be loaded.
 parser_base: models/parser/base/Qwen2.5-0.5B-Instruct
 parser_adapter: models/parser/lora-r16-v2   # ignored if the folder does not exist
 parser_mode: lora             # zero | few | lora (lora falls back to few if no adapter)

@@ -8,6 +8,10 @@ Modes:
 Invalid JSON or invalid field values never crash: bad fields are dropped (`lenient`),
 and `valid_json` in the result records whether the raw output parsed at all.
 
+The text first goes through the rule parser's spelling repair (`rules.normalize_text`):
+stretched or slightly misspelt keywords ("sloooow", "guita") are fixed, other words are
+left alone. The repair changes no text in the parser test set.
+
 AI attribution: drafted with Claude Code (Claude Opus 5.5), 2026-11-10. See ATTRIBUTION.md.
 """
 
@@ -23,6 +27,7 @@ from ..attributes import MusicAttributes
 from ..model import pick_device
 from ..paths import resolve
 from .prompts import build_messages, extract_json
+from .rules import normalize_text
 
 
 @dataclass
@@ -72,7 +77,7 @@ class LMParser:
         out: list[ParseResult] = []
         for i in range(0, len(texts), batch_size):
             chunk = texts[i:i + batch_size]
-            enc = self.tok([self._prompt(t) for t in chunk], return_tensors="pt", padding=True,
+            enc = self.tok([self._prompt(normalize_text(t)) for t in chunk], return_tensors="pt", padding=True,
                            add_special_tokens=False).to(self.device)
             gen = self.model.generate(**enc, max_new_tokens=self.max_new_tokens, do_sample=False,
                                       pad_token_id=self.tok.pad_token_id)

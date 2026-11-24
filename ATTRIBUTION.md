@@ -73,6 +73,15 @@ student reported that the melodies sounded odd:
   turns the limit off for comparison.
 - `src/tunesmith/eval/listening.py`: blind A/B listening pages comparing real excerpts
   with generated ones under different sampling settings.
+- Spelling repair in the rule parser (`understand/rules.py`, `normalize_text`), after the
+  student's request "a very very saaddd and very sloooow song with violin piano and
+  guita" lost its mood and tempo:
+  - stretched letters are squeezed back to a keyword;
+  - a single missing, extra or swapped letter in a longer word is corrected.
+  It changes no word in the parser test set, so the rule-parser results are unchanged.
+- The app now reads descriptions with the LoRA parser instead of the keyword rules.
+  - The same spelling repair runs before the language model.
+  - Parse results are cached per description.
 
 **Reference Transformer (AI-written at the student's request, 2026-11-14).**
 - `src/tunesmith/model/transformer_ref.py` (`model.type: transformer_ref`,

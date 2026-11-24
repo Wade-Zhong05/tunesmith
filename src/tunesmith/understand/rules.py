@@ -4,6 +4,16 @@ Fields are matched in a fixed order and each match is blanked out of the text, s
 phrase is used once (e.g. "very slow" sets the tempo once, and "slow" inside it is not
 matched again).
 
+Before matching, words that are not keywords are repaired when the repair is unambiguous
+(`normalize_text`):
+- stretched letters ("saaddd", "sloooow", "veeery") are squeezed back to a keyword ("sad",
+  "slow", "very");
+- a single missing, extra or swapped letter in a longer word ("guita", "violn", "pinao")
+  is corrected to the only keyword that close. Substituted letters are not corrected,
+  because those often make another real word ("horse" is not "house"), and neither are
+  word forms such as plurals ("guitars", "voice" vs "voices", "orchestral"): whether
+  those count is a question for the keyword tables, not for spelling repair.
+
 AI attribution: drafted with Claude Code (Claude Opus 5.5), 2026-11-10. See ATTRIBUTION.md.
 """
 
@@ -11,6 +21,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
+from itertools import groupby, product
 from typing import Any, Optional
 
 from ..attributes import MusicAttributes, normalize_key, normalize_meter, tempo_from_bin
@@ -76,6 +87,75 @@ def find_all(text: str, table: dict[str, list[str]], limit: int = 4) -> tuple[li
     return found, text
 
 
+_WORD = re.compile(r"[A-Za-z]+")
+_MIN_FUZZY = 5  # only words this long are corrected for a missing, extra or swapped letter
+
+
+@lru_cache(maxsize=1)
+def _vocabulary() -> frozenset[str]:
+    """Every word that occurs in a keyword."""
+    words: set[str] = set()
+    for table in load_keywords().values():
+        for keywords in table.values():
+            for k in keywords:
+                words.update(w.lower() for w in _WORD.findall(k))
+    return frozenset(words)
+
+
+def _squeezed(word: str) -> list[str]:
+    """Forms of a word with every run of a repeated letter kept once or twice."""
+    runs = [(ch, len(list(g))) for ch, g in groupby(word)]
+    if all(n == 1 for _, n in runs) or sum(n > 1 for _, n in runs) > 6:
+        return []
+    return ["".join(p) for p in product(*[[ch] if n == 1 else [ch, ch * 2] for ch, n in runs])]
+
+
+def _one_edit(a: str, b: str) -> bool:
+    """b is a with one letter inserted or deleted, or two adjacent letters swapped."""
+    if abs(len(a) - len(b)) == 1:
+        short, long_ = (a, b) if len(a) < len(b) else (b, a)
+        return any(long_[:i] + long_[i + 1:] == short for i in range(len(long_)))
+    if len(a) == len(b) and a != b:
+        diff = [i for i in range(len(a)) if a[i] != b[i]]
+        return len(diff) == 2 and diff[1] == diff[0] + 1 and a[diff[0]] == b[diff[1]] and a[diff[1]] == b[diff[0]]
+    return False
+
+
+# word = keyword + suffix: an inflected form of the keyword ("guitars", "dancer", "orchestral")
+_LONGER_FORMS = ("s", "es", "y", "l", "al", "d", "ed", "r", "er", "ly")
+# keyword = word + suffix: the keyword is a plural or adjective of a real word ("voice" -> "voices",
+# "space" -> "spacey"); a dropped final letter of other kinds is a typo ("guita" -> "guitar")
+_SHORTER_FORMS = ("s", "es", "y", "al")
+
+
+def _word_form(word: str, keyword: str) -> bool:
+    """Is `word` another form of `keyword` (or the reverse) rather than a misspelling?"""
+    if len(word) > len(keyword):
+        return any(word == keyword + suf for suf in _LONGER_FORMS)
+    return any(keyword == word + suf for suf in _SHORTER_FORMS)
+
+
+@lru_cache(maxsize=4096)
+def _repair(word: str) -> str:
+    vocab = _vocabulary()
+    if word in vocab:
+        return word
+    forms = [f for f in _squeezed(word) if f in vocab]
+    if forms:
+        return min(forms, key=len)
+    if len(word) >= _MIN_FUZZY:
+        near = [v for v in vocab if len(v) >= _MIN_FUZZY and _one_edit(word, v) and not _word_form(word, v)]
+        if len(near) == 1:
+            return near[0]
+    return word
+
+
+def normalize_text(text: str) -> str:
+    """Repair stretched and slightly misspelt keywords; other words are left alone."""
+    return _WORD.sub(lambda m: m.group(0) if m.group(0).lower() in _vocabulary() else _repair(m.group(0).lower()),
+                     text)
+
+
 def _blank(text: str, span: tuple[int, int]) -> str:
     return text[: span[0]] + " " * (span[1] - span[0]) + text[span[1]:]
 
@@ -97,7 +177,7 @@ def _key(text: str, kw: dict) -> tuple[Optional[str], str]:
 def parse(text: str, keywords: Optional[dict] = None) -> MusicAttributes:
     kw = keywords or load_keywords()
     pats = _patterns()
-    t = text
+    t = normalize_text(text)
     data: dict[str, Any] = {}
 
     data["key"], t = _key(t, kw)

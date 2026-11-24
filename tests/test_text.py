@@ -15,7 +15,7 @@ from tunesmith.eval.parser_metrics import field_accuracy
 from tunesmith.paths import ROOT, load_yaml, read_jsonl
 from tunesmith.understand.make_dataset import build, clean_target, template_rows
 from tunesmith.understand.prompts import build_messages, extract_json, target_json
-from tunesmith.understand.rules import load_keywords, mentions, parse
+from tunesmith.understand.rules import load_keywords, mentions, normalize_text, parse
 
 CASES = yaml.safe_load(open(ROOT / "tests" / "fixtures" / "rule_cases.yaml", encoding="utf-8"))["cases"]
 
@@ -74,3 +74,11 @@ def test_field_accuracy():
     m = field_accuracy(pred, gold)
     assert m["key_accuracy"] == 1.0 and m["mood_accuracy"] == 0.0 and m["tempo_accuracy"] == 0.0
     assert m["genre_hallucination"] == 0.5 and m["valid_rate"] == 0.5 and m["exact_match"] == 0.0
+
+
+def test_rule_parser_repairs_stretched_and_misspelt_keywords():
+    a = parse("a very very saaddd and very sloooow song with violin piano and guita")
+    assert a.mood == "sad" and a.tempo_bpm == 52 and a.instruments == ["violin", "piano", "guitar"]
+    assert normalize_text("happpy jazzzz with pinao and violn") == "happy jazz with piano and violin"
+    # word forms and substituted letters are left alone: they are other words, not typos
+    assert normalize_text("guitars voice space dancer horse") == "guitars voice space dancer horse"

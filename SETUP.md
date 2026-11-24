@@ -101,10 +101,16 @@ evaluation, so the model can be heard while it trains.
 ```bash
 pixi run make-parser-data          # -> data/parser/{train,val,test}.jsonl (needs data/raw/midicaps/train.json)
 pixi run download-parser-base      # Qwen/Qwen2.5-0.5B-Instruct -> models/parser/base/
-pixi run -e cuda train-parser      # LoRA adapter -> models/parser/lora-r16
+pixi run -e cuda train-parser --out-dir models/parser/lora-r16-v2   # LoRA adapter (about 2.5 h on the 4070)
 ```
 
-To use it in the app, set `parser: lm` in `configs/app.yaml`.
+**Which parser the app uses.**
+- The app reads descriptions with this adapter (`parser: lm` and `parser_adapter` in
+  `configs/app.yaml`).
+- If the base model or the adapter is missing, it falls back to the keyword rules
+  (`parser: rules`) and says so in `/api/health`.
+- Parsing takes about 0.5 s per new description on the GPU (`pixi run -e cuda app`) and
+  7–10 s on the CPU. Repeated descriptions come from a cache.
 
 ## 6. Evaluate
 

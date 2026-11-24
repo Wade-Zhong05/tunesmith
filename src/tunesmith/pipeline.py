@@ -89,6 +89,8 @@ class TuneSmith:
         self.out_dir = resolve(self.cfg.get("output_dir", "outputs/app"))
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
+        self.parse_lock = threading.Lock()
+        self.parse_cache: dict[str, MusicAttributes] = {}
         self.warnings: list[str] = []
         self.composers: dict[str, Composer] = {}
         render_cfg = self.cfg.get("render", {})
@@ -160,7 +162,17 @@ class TuneSmith:
     # ------------------------------------------------------------ use
 
     def parse(self, text: str) -> MusicAttributes:
-        return self.parser.parse(text) if text.strip() else MusicAttributes()
+        """Attributes for a description. The language-model parser is deterministic (greedy
+        decoding), so results are cached: composing again with the same text skips it."""
+        text = text.strip()
+        if not text:
+            return MusicAttributes()
+        with self.parse_lock:
+            if text not in self.parse_cache:
+                if len(self.parse_cache) >= 256:
+                    self.parse_cache.pop(next(iter(self.parse_cache)))
+                self.parse_cache[text] = self.parser.parse(text)
+            return self.parse_cache[text].model_copy()
 
     def compose(self, text: str = "", overrides: Optional[dict[str, Any]] = None, n: int = 1,
                 seed: Optional[int] = None, temperature: Optional[float] = None, top_k: Optional[int] = None,

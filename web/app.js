@@ -453,7 +453,8 @@ function showModelStatus(h) {
   const ens = h.composers && h.composers.ensemble;
   const melody = h.trained ? "trained" : "not trained yet (a baseline answers instead)";
   const band = ens ? (ens.trained ? "trained" : "not trained yet (a baseline answers instead)") : "unavailable";
-  const reader = h.parser === "rules" ? "keyword rules" : "a fine-tuned language model";
+  const reader = h.parser === "rules" ? "keyword rules"
+    : h.parser === "lm-lora" ? "a fine-tuned language model (Qwen2.5-0.5B with LoRA)" : "a prompted language model";
   $("#model-status").textContent = `Melody model ${melody}. Band model ${band}. Descriptions are read with ${reader}. Running on ${h.device}.`;
 }
 
