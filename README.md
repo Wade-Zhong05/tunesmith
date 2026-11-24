@@ -19,6 +19,9 @@ parser, and random, bigram and GRU composers for the music.
 
 ## Quick Start
 
+On Windows, double-click `start_tunesmith.bat`. It installs pixi and the environment,
+downloads the models on the first run and opens the app in the browser. Elsewhere:
+
 ```bash
 pixi install
 pixi run download-models --all   # trained models, Qwen base model, SoundFont

@@ -41,6 +41,11 @@ pixi run test                                        # unit tests
 pixi run smoke                                       # tiny synthetic training run, about a minute on CPU
 ```
 
+On Windows, `start_tunesmith.bat` does all of this in one step: it installs pixi and the
+environment, downloads missing models, starts the app on the first free port from 8000
+and opens the browser. It uses the CUDA environment when an NVIDIA driver is found; run
+`start_tunesmith.bat cpu` to stay on the CPU.
+
 The app reads descriptions with the LoRA parser (`parser: lm` in `configs/app.yaml`).
 A new description takes about 0.5 s on a GPU and 7–10 s on a CPU; repeated ones are
 cached. If the parser model is missing, the app falls back to keyword rules.
