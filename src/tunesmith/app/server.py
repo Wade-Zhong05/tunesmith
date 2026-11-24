@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import threading
 import time
 from collections import defaultdict, deque
 from typing import Any, Literal, Optional
@@ -84,13 +85,15 @@ def create_app(config: str | dict[str, Any] = "configs/app.yaml", smith=None) ->
     limiter = RateLimiter(int(cfg.get("rate_limit_per_minute", 30)))
     max_chars = int(cfg.get("max_text_chars", 500))
     state: dict[str, Any] = {"smith": smith}
+    init_lock = threading.Lock()
 
     def get_smith():
-        if state["smith"] is None:
-            from ..pipeline import TuneSmith
+        with init_lock:
+            if state["smith"] is None:
+                from ..pipeline import TuneSmith
 
-            state["smith"] = TuneSmith(cfg)
-        return state["smith"]
+                state["smith"] = TuneSmith(cfg)
+            return state["smith"]
 
     @app.exception_handler(Exception)
     async def on_error(request: Request, exc: Exception):  # never leak stack traces to the client

@@ -90,3 +90,35 @@ def test_api_ensemble_mode(tmp_path):
     assert legacy.status_code == 200 and legacy.json()["mode"] == "melody"
     health = client.get("/api/health").json()
     assert health["composers"]["ensemble"]["loaded"] is True
+
+
+def test_concurrent_health_requests_initialize_models_once(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    from time import sleep
+    from types import SimpleNamespace
+
+    import tunesmith.pipeline as pipeline
+
+    initializations = []
+
+    def load(config):
+        initializations.append(config)
+        sleep(0.05)  # Keep initialization open while the other requests arrive.
+        return SimpleNamespace(parser_name="test", composer_name="test", trained=False,
+                               device="cpu", warnings=[], status=lambda: {})
+
+    monkeypatch.setattr(pipeline, "TuneSmith", load)
+    ready = Barrier(4)
+    with TestClient(create_app(app_config(tmp_path))) as client:
+        def health_request(_):
+            ready.wait(timeout=5)
+            response = client.get("/api/health")
+            response.raise_for_status()
+            return response.json()
+
+        with ThreadPoolExecutor(max_workers=4) as workers:
+            results = list(workers.map(health_request, range(4)))
+
+    assert all(result["ok"] for result in results)
+    assert len(initializations) == 1
